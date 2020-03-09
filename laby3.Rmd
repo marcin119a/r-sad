@@ -1,0 +1,92 @@
+```{r}
+veneers <- read.csv(file = 'veneer.csv')
+#head(veneers)
+#head(veneers$brand == 'CHAMP')
+x <- (veneers[veneers$brand == 'CHAMP', ])
+head(x)
+y = x[,1]
+x_ = mean(y)
+## var(y) estymator nieobciązony wariancji
+wariancja = sqrt(var(y))
+sd_1 = sd(y)
+
+estymator_wariacji = (sum((y-mean(y))^{2})/(length(y)))^{0.5}
+
+
+## infomatric matrix,  witch is a function fo these parametric, eqal to - expect 
+```
+
+
+```{r}
+sample_sd <- function(N,n){
+  X <- rnorm(N*n)
+  m <- matrix(X,ncol=N)
+  sd_estimation <- apply(m, 2, sd)
+  return sd_estimation
+}
+```
+
+
+```{r}
+install.packages('asbio')
+```
+
+```{r}
+#u <- rnorm(100)
+#qu <- qnorm(ppoints(100))
+#qqplot(qu, u, las=1)
+
+
+a <-rnorm(n)
+qqnorm(a, main="N(0,1)", las=1)
+qqline(a)
+
+```
+
+```{r}
+get_proby <- function(N,n){
+  X <- rnorm(N*n)
+  m <- matrix(X, ncol=N)
+  m 
+}
+```
+
+```{r}
+
+shad <- read.csv(file = 'shad.csv')
+head(shad)
+srednia = tapply(shad$length, shad$site, mean)
+odchy = tapply(shad$length, shad$site, function(x){(var(x))^{1/2} })
+mediana = tapply(shad$length, shad$site, median)
+
+#var_2 <- function(x){
+#  return (var(x))^{1/2}
+#}
+#odchylenie = sqrt(var(x))
+```
+
+
+```{r}
+data(topo, package="MASS") 
+head(topo)
+
+```
+```{r}
+a <- 1
+N <- 1000
+n <- 10
+U <-runif(N*n, 0, a)
+```
+
+
+```{r}
+sample_sd <- function(N,n){
+  X <- rnorm(N*n)
+  m <- matrix(X,ncol=N)
+  sd_estimation <- apply(m, 2, sd)
+  return sd_estimation
+}
+
+```
+
+

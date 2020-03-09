@@ -1,0 +1,40 @@
+---
+title: "laby2"
+output: html_document
+---
+
+## Zadanie1.
+
+```{r}
+### zadanie1.   
+x <- runif(10, 4.2, 10.0) #float
+# x3 <- sample(1:10, 1) # intiger
+v <- mean((x-mean(x))^2)
+head(x)
+set.seed(198911)
+n = 2:8
+vecpoisson=rpois(sample(n),5)
+sum(vecpoisson-mean(vecpoisson))
+
+
+mean((vecpoisson-mean(vecpoisson))^2)
+head(vecpoisson)
+
+
+
+```
+
+## Macierze:
+
+```{r}
+X = rnorm(5000, 0, 1)
+mat = matrix(X, nrow=10, ncol=500)
+apply(mat, 2, var)
+apply(mat, 2, Var2)
+## średnia z próby
+Var2 <- function(x){
+  mean((x-mean(x))^2)
+}
+```
+
+
