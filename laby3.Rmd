@@ -1,3 +1,13 @@
+
+W pliku vener.csv znajdują się dane dotyczące odporności na ścieranie różnych marek forniru, pochodzące z pakietu asbio. Wczytaj te dane za pomocą komendy read.csv (jeśli masz zainstalowany pakiet asbio, możesz załadować dane za pomocą komendy data(veneer)). Następnie:
+
+    Wybierz dane dotyczące marki CHAMP
+    Oblicz średnią zmiennej wear
+    Oblicz odchylenie standardowe korzystając z estymatora nieobciążonego wariancji. Czy jest to estymator nieobciążony odchylenia standardowego?
+    Oblicz odchylenie standardowe korzystając z estymatora MLE
+    Porównaj wyniki z funkcją sd oraz pierwiastkiem z funkcji var
+
+
 ```{r}
 veneers <- read.csv(file = 'veneer.csv')
 #head(veneers)
@@ -15,6 +25,13 @@ estymator_wariacji = (sum((y-mean(y))^{2})/(length(y)))^{0.5}
 
 ## infomatric matrix,  witch is a function fo these parametric, eqal to - expect 
 ```
+
+Napisz funkcję, wylosuje N prób rozmiaru n z wybranego rozkładu i zwróci N estymowanych odchyleń standardowych, korzystając z wybranego pzez siebie estymatora. Wykorzystaj ją, aby:
+
+    Otrzymać 1000 wartości estymatora dla n=10 i przedstawić je na wykresie pudełkowym
+    Narysować wykres wartości średniej estymatora dla n z przedziału od 10 do 1000, obliczoną na podstawie symulacji dla N=1000.
+    Zinterpretuj wyniki. Czy widzisz obciążenie estymatora? Czy estymator jest zgodny?
+
 
 
 ```{r}

@@ -1,0 +1,58 @@
+```{r}
+head(Zadluzenie.gmin)
+```
+
+ Za pomocą funkcji summary sprawdź podstawowe statystyki tych danych. Jaka jest mediana zadłużenia? Jaka jest najwyższa wartość zadłużenia wśród 75% najmniej zadłużonych gmin? A jakie jest najwyższe zadłużenie?
+```{r}
+summary(Zadluzenie.gmin$Zadłużenie.gmin)
+```
+
+Oblicz średnią i odchylenie standardowe zadłużenia. Na tej podstawie odpowiedz, w przybliżeniu, o ile punktów procentowych zadłużenie średnio rzecz biorąc odchyla się od średniej?
+
+```{r}
+#head(veneers)
+#head(veneers$brand == 'CHAMP')
+x <- (Zadluzenie.gmin$Zadłużenie.gmin)
+head(x)
+mean(x)
+sd(x)
+var(x)^{0.5}
+```
+
+
+```{r}
+library(ggplot2)
+zadluzenie_filtered <- Zadluzenie.gmin
+zadluzenie_filtered <- zadluzenie_filtered[zadluzenie_filtered$Kod.Teryt != 3203042,] # gm. Ostrowice
+zadluzenie_filtered <- zadluzenie_filtered[zadluzenie_filtered$Kod.Teryt != 3205072,] # gm. Rewal
+S_data <- zadluzenie_filtered
+ggplot(S_data) + geom_histogram(aes(x=Zadłużenie.gmin), bins=30)
+# tak tworzymy histogram
+```
+
+
+Przedstaw zadłużenie gmin na histogramie, korzystając z biblioteki ggplot2 (pamiętaj o wczytaniu biblioteki komendą library). Czy zadłużenie gminy Ostrowice wygląda na typowe dla polskiej gminy? Może należy uznać tę gminę za obserwację odstającą i usunąć z analizy? Wiersze lub kolumny możemy usuwać za pomocą indeksowania ujemnego. Na przykład, Zadluzenie.gmin[-10, ] zwróci tabelę Zadluzenie.gmin bez dziesiątego wiersza.
+```{r}
+zadluzenie_filtered_qq <- zadluzenie_filtered[zadluzenie_filtered$Zadłużenie.gmin > 20,]
+zadluzenie_filtered_qq <- zadluzenie_filtered[zadluzenie_filtered$Zadłużenie.gmin <  80,]
+
+
+ggplot(zadluzenie_filtered_qq) + stat_qq(aes(sample=Zadłużenie.gmin)) + stat_qq_line(aes(sample=Zadłużenie.gmin))
+```
+
+### Przedział ufności
+
+
+```{r}
+data(iris)
+#head(veneers)
+#head(veneers$brand == 'CHAMP')
+x <- (iris[iris$Species == 'versicolor', ])
+head(x)
+#iris_filtered_qq = x$
+ggplot(x) + stat_qq(aes(sample=Sepal.Width)) + stat_qq_line(aes(sample=Sepal.Width))
+```
+
+```{r}
+qt()
+```

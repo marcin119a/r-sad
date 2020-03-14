@@ -5,6 +5,31 @@ output: html_document
 
 ## Zadanie1.
 
+```
+Korzystając z funkcji rnorm, wylosuj 5000 obserwacji z rozkładu normalnego o średniej 0 i wybranym przez siebie odchyleniu standardowym σ.
+Przekształć otrzymany wektor w macierz o wymiarach 10 x 500. W każdej kolumnie wyestymuj wariancję korzystając z funkcji apply oraz var. Funkcja var zwraca nieobciążony estymator wariancji: 
+
+Wyestymuj i porównaj obciążenia i odchylenia standardowe wszystkich trzech estymatorów wariancji. Następnie wyestymuj i porównaj porównaj błędy średniokwadratowe estymatorów: 
+
+```
+
+
+```{r}
+X <- rnorm(5000, 0, 5)
+M <- matrix(X, nrow = 10)
+S0 <- apply(M, 2, var)
+S1 <- 50*9/10
+S2 <- 50*9/11
+GSO <- mean(S0)- 25
+VSO <- var(S0)
+rmseo <- sqrt(mean(S0-25)^{2})
+
+RMSE <- function(m, o){
+  sqrt(mean((m - o)^2))
+}
+```
+
+
 ```{r}
 ### zadanie1.   
 x <- runif(10, 4.2, 10.0) #float
