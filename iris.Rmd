@@ -1,0 +1,71 @@
+---
+title: "iris"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Obsługa Danych w R
+
+
+
+### Zadanie3:
+```
+Zadanie 3. Dołącz do danych iris nową kolumnę o nazwie Sepal.Area, równą iloczynowi kolumn Sepal.Length oraz Sepal.Width. Piewsze wiersze nowej tabeli powinny wyglądać następująco:
+```
+
+
+```{r cars}
+data(iris)
+head(iris)
+x <- iris[1,2]
+iris$Sepal.Area <- iris$Sepal.Length * iris$Sepal.Width
+head(iris)
+```
+
+
+Teoria do zadania4 
+```wektor całkowitoliczobyw```
+
+```{r}
+n = 10
+m = 20
+x <- n:m
+```
+
+
+
+
+### Zadanie4:
+Zadanie 4. Utwórz wektor kolejnych liczb naturalnych od 1 do 1000 włącznie. Następnie:
+
+    Pomnóż każdy element przez 2.
+    Zmień co piąty element na 0, korzystając z operatora : i działań arytmetycznych.
+    Dodaj elementy -2, -1 na początku wektora oraz 2001, 2002 na końcu.
+    Sprawdź długość nowego wektora.
+
+```{r}
+x <- 1:1000
+x <-x * 2
+x[seq(1, length(x), 5)] = 0
+append(x, 2, 1)
+head(x)
+```
+
+```{r}
+a <- 1:120
+a[seq(1, length(a), 6)] = 0 
+#c <- seq(1, length(a), 6)
+append(1:5, c(), after = 0)
+```
+
+## Including Plots
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

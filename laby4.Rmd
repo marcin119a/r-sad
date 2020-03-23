@@ -1,0 +1,97 @@
+### H_0: P(Y=1) = 1/2
+czyli ze nie wybierają
+### H_1: P(Y=1) > 1/2
+
+#### X 
+
+```{r}
+N = 110
+M = dbinom(1:N, N, 0.5)
+Z = (1 - pbinom(1:N - 1, N, 0.5)) >= 0.05
+Z
+```
+
+
+```{r}
+N = 110
+X = as.integer(110*0.667)
+
+p.value = 1 - pbinom(X-1, N, 0.5)
+p.value 
+```
+
+
+```{r}
+data.to.plot <- data.frame('X' = 1:N, 'dbinom' = dbinom(1:N, N, 0.5), 'Typical' = 1 - pbinom(1:N - 1, N, 0.5) >= 0.05)
+```
+
+```{r}
+library('ggplot2')
+ggplot(data.to.plot) + geom_point(aes(x=X, y=dbinom, col=Typical)) + ggtitle('Rozkład zmiennej X przy założeniu H0') + theme_minimal() + geom_point(aes(x = 73, y = dbinom(73, N, 0.5)), col=I('red'), shape=1, size=4)
+```
+
+
+### Zadanie1 Domowe:
+
+Zadanie 1. Dane zebrane przez zespół wskazują, że przed rokiem 2000 R. longicorn zamieszkujące składy drewna stanowiły 0.40 wszystkich wystąpień tego owada. Po 2000 liczba ta wzrosła do 0.76.
+Za pomocą testu niezależności chi-kwadrat zweryfikuj, czy wybór siedliska zależy od okresu.
+Oblicz p-wartość korzystając z funkcji pchisq, a następnie zweryfikuj swoje wyniki za pomocą chisq.test.
+
+
+Wczytanie zadłużenia gmin:
+```{r}
+Zadluzenie.gmin <- read.delim("Zadluzenie gmin.csv")
+head(Zadluzenie.gmin)
+```
+
+ Druga kolumna danych zawiera kod terytorialny gminy, którego pierwsze dwie cyfty to identyfikator województwa. Część kodów terytorialnych zaczyna się od zera. R domyślnie uzna, że ta kolumna zawiera liczby, więc te zera usunie.
+ 
+ 
+
+### Zadanie2. 
+```{r}
+library("stringr")
+
+Zadluzenie.gmin <- read.delim("Zadluzenie gmin.csv", colClasses = c('factor', 'factor', 'factor', 'numeric', 'factor', 'factor'))
+
+slownik <- c('02' = 'Dolnośląskie', '04' = 'Kujawsko-pomorskie',
+             '06' = 'Lubelskie', '08' = 'Lubuskie',
+             '10' = 'Łódzkie', '12' = 'Małopolskie',
+             '14' = 'Mazowieckie', '16' = 'Opolskie', 
+             '18' = 'Podkarpackie', '20' = 'Podlaskie',
+             '22' = 'Pomorskie', '24' = 'Śląskie',
+             '26' = 'Świętokrzyskie', '28' = 'Warmińsko-mazurskie',
+             '30' = 'Wielkopolskie',  '32' = 'Zachodniopomorskie')
+
+substr(Zadluzenie.gmin$Kod, 1, 3)
+df= Zadluzenie.gmin$Wojewodztwo <- slownik[substr(Zadluzenie.gmin$Kod.Teryt, 1, 2)]
+head(Zadluzenie.gmin)
+
+```
+
+
+```{r}
+x <- median(Zadluzenie.gmin$Zadłużenie.gmin)
+y <- quantile(Zadluzenie.gmin$Zadłużenie.gmin, probs=(0.5))
+x
+y
+
+Q <- quantile(Zadluzenie.gmin$Zadłużenie.gmin, probs=c(.25, .75), na.rm = FALSE)
+#head(Q)
+iqr <- IQR(Zadluzenie.gmin$Zadłużenie.gmin)
+#head(iqr)
+
+eliminated <- subset(Zadluzenie.gmin, Zadluzenie.gmin$Zadłużenie.gmin > (Q[1] - 1.5*iqr) & Zadluzenie.gmin$Zadłużenie.gmin < (Q[2]+1.5*iqr))
+#View(eliminated)
+#View(Zadluzenie.gmin)
+#ggplot(eliminated, aes(x=Zadłużenie.gmin)) + geom_histogram()
+```
+
+```{r}
+install.packages("stringr")
+```
+
+
+
+
+
