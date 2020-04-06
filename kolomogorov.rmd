@@ -1,0 +1,177 @@
+```{r}
+library(ggplot2)
+library(xtable)
+
+
+xj = sort(c(6.6, 0.6, 3.4, 1.8, -0.6, 2.4, 2.6, 5.4))
+
+  
+  
+uj = (xj - 3)/ 2
+ks.test(uj, "pnorm")
+
+
+#xseq<-st
+
+#densities<-dnorm(xseq, 0,1)
+#densities
+F.uj<-pnorm(uj, 0, 1)
+#ecdf(x)
+
+
+F.n= c(1:8)/8
+
+# S3 method for ecdf
+outcomes = data.frame(
+  xj, 
+  uj, 
+  F.uj, 
+  c(1:8),
+  F.n,
+  abs(F.uj-F.n)
+)
+
+#zadanie1= table(outcomes)
+#print(xtable(outcomes, type = "latex"), file = "table_zadanie1.tex")
+View(outcomes)
+#df <- data.frame(height = (st))
+
+# geom_step(data = norm_df)
+```
+
+
+
+```{r}
+set.seed(15)
+dd <- data.frame(x=uj)
+ggplot(dd, aes(x)) +
+    stat_ecdf() + 
+    stat_function(fun = pnorm, colour = "red")
+
+ed <- ecdf(dd$x)
+maxdiffidx <- which.max(abs(ed(dd$x)-pnorm(dd$x)))
+print(maxdiffidx)
+maxdiffat <- dd$x[maxdiffidx]
+
+ggplot(dd, aes(x)) +
+    stat_ecdf() + 
+    stat_function(fun = pnorm, colour = "red")
+maxdiffat
+
+```
+
+```{r}
+install.packages("xtable")
+```
+
+
+
+
+### Podpunkt B
+
+```{r}
+
+library(ggplot2)
+library(xtable)
+
+n = 6
+xj_exp = sort(c(2.62, 0.92, 1.75, 4.84, 0.26, 1.27))
+
+uj = xj
+
+
+
+F.uj<-pexp(xj_exp, rate=1/2)
+
+ks.test(uj, "pexp", rate=1/2)
+
+F.n= c(1:n)/n
+
+# S3 method for ecdf
+
+outcomes = data.frame(
+  xj_exp, 
+  uj, 
+  F.uj, 
+  c(1:n),
+  F.n,
+  abs(F.uj-F.n)
+)
+
+zadanie2= table(outcomes)
+outcomes
+#View(outcomes)
+#print(xtable(zadanie2, type = "latex"), file = "table_zadanie2.tex")
+
+dd <- data.frame(x=uj)
+ed <- ecdf(dd$x)
+#print(ed, "ed")
+
+
+maxdiffidx <- which.max(abs(ed(dd$x)-pexp(dd$x, rate=2)))
+#print(maxdiffidx)
+#print(pexp(dd$x, rate=2))
+maxdiffat <- dd$x[maxdiffidx]
+#print(maxdiffat)
+print(maxdiffat)
+
+
+ggplot(dd, aes(x)) +
+    stat_ecdf() + 
+    stat_function(fun = pexp, colour = "pink")
+#maxdiffat
+
+```
+
+
+### Podpunkt C
+
+```{r}
+
+library(ggplot2)
+
+xj = sort(c(-1.5, 0.3, 0.8, 2.0, -2.0, -0.8, 0.6, -0.6, 1.5, -0.3))
+
+n = length(xj)
+uj = xj
+
+
+
+F.uj<-pnorm(uj, 0, 1)
+F.uj
+
+
+F.n= c(1:n)/n
+
+# S3 method for ecdf
+
+outcomes3 = data.frame(
+  xj, 
+  uj, 
+  F.uj, 
+  c(1:n),
+  F.n,
+  abs(F.uj-F.n)
+)
+ks.test(uj, "pnorm", 0, 1)
+
+zadanie3= table(outcomes3)
+head(zadanie3)
+print(xtable(outcomes3, type = "latex"), file = "table_zadanie3.tex")
+
+dd <- data.frame(x=uj)
+ed <- ecdf(dd$x)
+#print(ed, "ed")
+
+
+maxdiffidx <- which.max(abs(ed(dd$x)-F.uj))
+print(maxdiffidx)
+maxdiffat <- dd$x[maxdiffidx]
+print(maxdiffat)
+
+ggplot(dd, aes(x)) +
+    stat_ecdf() + 
+    stat_function(fun = pnorm, colour = "pink")
+```
+
+
