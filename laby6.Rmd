@@ -44,7 +44,7 @@ Zadanie 1. Przeskaluj wszystkie kolumny predyktorów z danych wine. Możesz w ty
 
 ```{r}
 wine <- read.delim("~/Matematyka/SAD/laby2020/wine.csv", sep="\t")
-#head(wine)
+View(wine)
 #wine <- read.csv("~/Matematyka/SAD/laby2020/winequality-red.csv")
 #head(wine)
 
@@ -54,8 +54,8 @@ wine <- read.delim("~/Matematyka/SAD/laby2020/wine.csv", sep="\t")
 #wine$quality <- as.factor(wine$quality)
 #head(wine[,1:2])
 #head(apply(wine[,1:2], 2, function(x) x - mean(x) ))
-wine[,1:12] <- apply(wine[,1:12], 2, function(x) x - mean(x))
-wine[,1:12] <- apply(wine[,1:12], 2, function(x) x / sd(x))
+wine[,2:12] <- apply(wine[,2:12], 2, function(x) x - mean(x))
+wine[,2:12] <- apply(wine[,2:12], 2, function(x) x / sd(x))
 head(wine)
 
 ```
@@ -69,6 +69,7 @@ Zadanie 2. Zadanie przykładowe. Korzystając z klasyfikatora kNN, spróbuj prze
 ```{r}
 head(wine)
 wine$Quality <- as.factor(wine$Quality)
+# x jest bez Quality!
 x <- c(0.42, 0.03, -0.90, 0.15, -1.25, -0.15, -0.01, 0.73, 0.90, -0.82, -0.69)
 ```
 Następnie obliczamy odległość wektora x od wszystkich obserwacji w danych wine.
@@ -83,9 +84,10 @@ distances <- apply(wine[,-1], 1, function(y) sqrt(sum((x-y)^2)))
 k <- 3
 najblizsze_wiersze <- order(distances)[1:k]
 head(najblizsze_wiersze)
-najblizsze_klasy <- wine[, 1]
+najblizsze_klasy <- wine[najblizsze_wiersze, 1]
 head(najblizsze_klasy)
 czestosc_klas <- table(najblizsze_klasy)
+
 najczestsza_klasa <- which.max(czestosc_klas)
 najczestsza_klasa <- levels(wine$Quality)[najczestsza_klasa]
 #head(najblizsze_klasy)
@@ -110,6 +112,78 @@ wynik <- knn(zbior_treningowy[,-1], zbior_testowy[,-1], zbior_treningowy[,1], k=
 
 W zmiennej wynik mamy klasy przypisane kolejnym wierszom ze zbioru testowego. Możemy teraz obliczyć miarę accuracy, czyli proporcję poprawnie zaklasyfikowanych obserwacji:
 ```{r}
+head(wynik)
+head(zbior_testowy[,1])
 mean(wynik==zbior_testowy[,1])
 ```
+
+### Zadanie3
+Zadanie 3. Wykorzystując funkcję sapply() i bibliotekę ggplot2, przedstaw na wykresie punktowym zależność accuracy od wartości parametru k dla k od 1 do 15. Wykorzystaj w tym celu zbiór testowy i treningowy stworzony w powyższym przykładzie.
+Wskazówka: Postaraj się, aby kod służący do otrzymania wektora zawierającego accuracy dla różnych wartości k zajął jedynie jedną linijkę.
+```{r}
+#head(zbior_testowy)
+wynik <- knn(zbior_treningowy[,-1], zbior_testowy[,-1], zbior_treningowy[,1], k=3)
+mean(wynik==zbior_testowy[,1])
+```
+
+```{r}
+library(ggplot2)
+#ggplot(data = sklep77, aes(x=k, y=accuracy))
+
+#sapply()
+
+error.rate <- NULL
+k = 10
+for (i in 1:k) {
+  wynik <- knn(zbior_treningowy[,-1], zbior_testowy[,-1], zbior_treningowy[,1], k=i)
+  error.rate[i] <- mean(wynik==zbior_testowy[,1])
+    
+}
+
+knn.error <- as.data.frame(cbind(k=1:k, error.type =error.rate))
+
+ggplot(knn.error,aes(k,error.type))+ 
+  geom_point()+ 
+  geom_line() + 
+  scale_x_continuous(breaks=1:10)+ 
+  theme_bw() +
+  xlab("Wartość K") +
+  ylab('Błąd')
+```
+
+
+
+#### Problem z accuracy
+
+W przypadku niezbalansowanych klas miara accuracy nie oddaje dobrze jakości klasyfikatora. Żeby zobaczyć, dlaczego tak jest, wyobraź sobie dane rozmiaru 100 w których 99 obserwacji jest typu A, a jedna typu B. Klasyfikator, który w ogóle nie korzysta z danych, a po prostu przypisuje wszystkim obserwacjom klasę A, będzie miał 99% skuteczności!
+
+Przydatnym narzędziem do dokładniejszego zbadania klasyfikatora jest tzw. macierz konfuzji (ang. confusion matrix), w której kolejne wiersze odpowiadają prawdziwym klasom, a kolejne kolumny - klasom zwróconym przez klasyfikator. Komórka mi,j
+macierzy konfuzji M zawiera liczbę obserwacji z klasy i zaklasyfikowanych jako klasa j
+
+.
+
+Miarami, które lepiej radzą sobie z niezbalansowanymi danymi, jest precision oraz recall. To pierwsze jest miarą tego, na ile możemy wierzyć klasyfikatorowi jeśli zwraca on określoną klasę. To drugie mierzy, jak dobrze klasyfikator wychwytuje daną klasę z danych. Korzystając z macierzy konfuzji, możemy obliczyć precision dla klasy i
+jako 
+
+### Zadanie4
+  
+
+### Zadanie5
+Utwórz macierz konfuzji dla wyników klasyfikatora kNN na zbiorze testowym z danych wine. Skorzystaj z funkcji table. Następnie oblicz precision oraz recall dla każdej klasy. Porównaj wyniki dla 3 wybranych wartości parametru k. Na podstawie otrzymanych wyników spróbuj oszacować odpowiedzi na następujące pytania:
+
+```{r}
+predictions <- knn(zbior_treningowy[,-1], zbior_testowy[,-1], cl=zbior_treningowy[,1], k=3)
+validationData.class = zbior_treningowy[,1]
+#cat("Confusion matrix:\n")
+head(predictions)
+#table(y,x)
+head(zbior_testowy[,1])
+length(predictions)
+length(validationData.class)
+#xtab = table(predictions, validationData.class)
+```
+
+
+
+
 

@@ -1,0 +1,5 @@
+Zadanie 1. Wczytaj i obejrzyj zbiór danych dotyczący sportowców, który znajdziesz tutaj. Odpowiedz na poniższe pytania:
+
+* Ile ma obserwacji, a ile zmiennych? Które zmienne są ilościowe, a które jakościowe?
+* Jaka jest średnia oraz wariancja każdej ze zmiennych ilościowych?
+* Które zmienne ilościowe są najbardziej skorelowane, które najsłabiej, a które mają najsilniejszą korelację ujemną?
