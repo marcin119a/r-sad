@@ -1,0 +1,115 @@
+Wczytaj dane z pliku wine.csv dostępnego na stronie przedmiotu. Kolumna o nazwie Quality zawiera jakość wina.
+
+```{r}
+wine <- read.csv("~/Matematyka/SAD/laby2020/wine.csv", header=FALSE)
+head(wine)
+head(wine$Quality)
+
+```
+
+
+
+Kolumny zawierające predyktory, takie jak pH, są wyrażone w róznych jednostkach. Na ogół powoduje to problemy w klasyfikacji, ponieważ ciężko jest porównywać kilogramy z procentami i metrami. Ponadto jeśli dwie zmienne mierzą podobne cechy, ale jest wyrażona w kilometrach, a druga w centymetrach, to ich wariancje są zupełnie różne. Z tego powodu mają różny wpływ na wynik klasyfikacji.
+
+Najłatwiej zrozumieć, na czym polega powyższy problem, na poniższym przykładzie. Po lewej mamy wykres przedstawiający oryginalne dane iris, w których wymiary płatków i działek kielicha są wyrażone w centymetrach. Jak widać, zmienna Petal.Length całkiem nieźle rozróżnia gatunki irysów, lepiej niż zmienna Sepal.Length. Na wykresie po lewej zmienna Petal.Length została wyrażona w kilometrach i, jak widać, nie rozróżnia już tak dobrze gatunków.
+
+```{r}
+library(ggplot2)
+data(iris)
+iris$Skala <- 'Petal.Length mierzone w centymetrach'
+iris_km <- iris
+iris_km$Petal.Length <- iris_km$Petal.Length/10000
+#head(iris_km)
+iris_km$Skala <- 'Petal.Length mierzone w kilometrach'
+iris_both <- rbind(iris, iris_km)
+
+ggplot(iris_both, aes(y=Sepal.Length, x=Petal.Length, col=Species)) + 
+  geom_point() + theme_minimal() + facet_wrap(.~Skala, scales='fixed')
+```
+@TODO, czy to jest normalny rozkład? 
+
+Podstawowym sposobem na uniknięcie problemu różnych jednostek jest wycentrowanie danych, czyli odjęcie od każdej kolumny jej średniej, a następnie wyskalowanie, czyli ```podzielenie każdej kolumny przez jej odchylenie``` standardowe. Skalowanie przekształca kolumny w zmienne bezwymiarowe, czyli pozbawione jednostek. W przypadku danych iris możemy zrobić to następująco:
+
+```{r}
+library(ggplot2)
+iris[,1:4] <- apply(iris[,1:4], 2, function(x) x - mean(x))  
+iris[,1:4] <- apply(iris[,1:4], 2, function(x) x / sd(x))
+ggplot(iris, aes(x=Petal.Length, y=Sepal.Length, col=Species)) + geom_point() + theme_minimal()
+#ggplot(iris, aes(x=Petal.Length, y=Sepal.Length, col=Species)) + geom_point() + theme_minimal()
+```
+
+Zadanie1. 
+      
+Zadanie 1. Przeskaluj wszystkie kolumny predyktorów z danych wine. Możesz w tym celu wykorzystać albo apply(), albo funkcję scale(). Następnie zrzutuj zmienną Quality na typ factor za pomocą funkcji as.factor() w następujący sposób: wine$Quality <- as.factor(wine$Quality).
+
+```{r}
+wine <- read.delim("~/Matematyka/SAD/laby2020/wine.csv", sep="\t")
+#head(wine)
+#wine <- read.csv("~/Matematyka/SAD/laby2020/winequality-red.csv")
+#head(wine)
+
+#wine[,1:12] <- apply(wine[,1:12], 2, function(x) x - mean(x))  
+#scale(wine[,1:2])
+#wine[,1:12] <- apply(wine[,1:12], 2, function(x) x / sd(x))
+#wine$quality <- as.factor(wine$quality)
+#head(wine[,1:2])
+#head(apply(wine[,1:2], 2, function(x) x - mean(x) ))
+wine[,1:12] <- apply(wine[,1:12], 2, function(x) x - mean(x))
+wine[,1:12] <- apply(wine[,1:12], 2, function(x) x / sd(x))
+head(wine)
+
+```
+
+### Klasyfikator kNN
+
+Klasyfikator kNN jest jednym z najprostszych klasyfikatorów, ale w wielu zastosowaniach daje całkiem niezłe wyniki. Polega on na przypisaniu danej obserwacji takiej klasy, jaka pojawia się najczęściej wśród jej k najbliższych sąsiadów. Użytkownik decyduje, jak ustawić parametr k oraz jaką miarę odległości wykorzystać. Szczegóły dotyczące tego klasyfikatora zostały omówione na wykładzie piątym.
+
+Zadanie 2. Zadanie przykładowe. Korzystając z klasyfikatora kNN, spróbuj przewidzieć jakość wina o parametrach 0.42, 0.03, -0.90, 0.15, -1.25, -0.15, -0.01, 0.73, 0.90, -0.82, -0.69. Parametry odpowiadają wycentrowanym i wyskalowanym danym.
+
+```{r}
+head(wine)
+wine$Quality <- as.factor(wine$Quality)
+x <- c(0.42, 0.03, -0.90, 0.15, -1.25, -0.15, -0.01, 0.73, 0.90, -0.82, -0.69)
+```
+Następnie obliczamy odległość wektora x od wszystkich obserwacji w danych wine.
+```{r}
+#head(wine[,-1])
+distances <- apply(wine[,-1], 1, function(y) sqrt(sum((x-y)^2)))
+#distances <- apply(wine[,-1], 1, function(y) sqrt(sum((x-y)^2)))
+```
+
+```{r}
+
+k <- 3
+najblizsze_wiersze <- order(distances)[1:k]
+head(najblizsze_wiersze)
+najblizsze_klasy <- wine[, 1]
+head(najblizsze_klasy)
+czestosc_klas <- table(najblizsze_klasy)
+najczestsza_klasa <- which.max(czestosc_klas)
+najczestsza_klasa <- levels(wine$Quality)[najczestsza_klasa]
+#head(najblizsze_klasy)
+```
+
+
+#### Błąd treningowy, błąd testowy
+
+Żeby wybrać wiersze do zbioru testowego, wykorzystamy funkcję sample. Jest to bardzo ważna funkcja, więc zapoznaj się z jej dokumentacją. Stworzymy zbiór testowy o 480 elementach, a pozostałe przypiszemy do zbioru treningowego.
+```{r}
+indeksy_testowe <- sample(1:nrow(wine), 480, replace=F)
+zbior_testowy <- wine[indeksy_testowe, ]
+zbior_treningowy <- wine[-indeksy_testowe, ]  # Indeksowanie ujemne wiele ułatwia!
+```
+
+Możemy teraz sprawdzić, jak klasyfikator kNN poradzi sobie na zbiorze testowym. Wykorzystamy w tym celu funkcję knn.
+```{r}
+library(class)
+wynik <- knn(zbior_treningowy[,-1], zbior_testowy[,-1], zbior_treningowy[,1], k=3)
+```
+
+
+W zmiennej wynik mamy klasy przypisane kolejnym wierszom ze zbioru testowego. Możemy teraz obliczyć miarę accuracy, czyli proporcję poprawnie zaklasyfikowanych obserwacji:
+```{r}
+mean(wynik==zbior_testowy[,1])
+```
+

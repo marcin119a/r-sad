@@ -1,0 +1,35 @@
+Dane zebrane przez zespół wskazują, że przed rokiem 2000 R. longicorn zamieszkujące składy drewna stanowiły 0.40 wszystkich wystąpień tego owada. Po 2000 liczba ta wzrosła do 0.76.
+Za pomocą testu niezależności chi-kwadrat zweryfikuj, czy wybór siedliska zależy od okresu.
+Oblicz p-wartość korzystając z funkcji pchisq, a następnie zweryfikuj swoje wyniki za pomocą chisq.test.
+
+
+$$
+H_0: \text{Wybór sedliska nie zależy od okresu}
+$$
+```{r}
+N = 110
+prawd.przed <- (0.667 - 0.76)/(0.4 - 0.76)
+prawdopodobienstwa <- matrix(c(0.4*prawd.przed, (1-0.4)*prawd.przed, 0.76*(1-prawd.przed), (1-0.76)*(1-prawd.przed)), ncol=2)
+
+prawdopodobienstwa
+contingency_table <- prawdopodobienstwa * N
+contingency_table <- round(contingency_table) 
+wiersze.suma <- apply(contingency_table, 1, sum)
+
+kolumny.suma <- apply(contingency_table, 2, sum)
+
+oczekiwana_wartosc <- wiersze.suma %*% t(kolumny.suma) 
+
+oczekiwana_wartosc <- oczekiwana_wartosc/sum(contingency_table)  #n_i. n_.j / N
+
+T.stat <- sum((contingency_table-oczekiwana_wartosc)^2/oczekiwana_wartosc)
+
+
+p.value <- 1-pchisq(T.stat, 1)  # ma rozkład \chi^2((r-1)(s-1)) = (2-1)*(2-1) = 1
+
+## Sprawdzenie za pomocą wbudowanego testu:
+chisq.test(contingency_table, correct=F)
+```
+
+Podumowanie:
+* Mója p.wartość jest (0.0004439) mniejsza niż (0.05), nie możemy zaakceptować hitpoezy zerowej. 
