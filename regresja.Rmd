@@ -1,0 +1,27 @@
+```{r}
+X = c(0, 30, 10, 15, 5, 25, 35, 40)
+print(mean(X))
+print(mean(Y))
+Y = c(4, 1, 2, 2, 3, 1, 0, 1)
+
+
+beta1 <- sum((X-mean(X))*(Y - mean(Y)))/sum((X - mean(X))^2)
+print(beta1)
+
+beta0 <- mean(Y) - beta1*mean(X)
+print(beta0)
+
+model2 <- lm(Y ~ X)
+summary(model2)
+dt <- data.frame(X,Y)
+
+library(ggplot2)
+#ggplot(dt, aes(x=X, y=Y)) + geom_point()
+ggplot(dt, aes(x=X, y=Y)) + geom_point() + geom_abline(slope=beta1, intercept=beta0, col='red')
+
+```
+
+
+```{r}
+confint(model2)
+```

@@ -1,5 +1,155 @@
+
+
+ 	
+	Sport 		Sport
+	Sex 		male or female
+	Ht 		Height in cm
+	Wt 		Weight in kg
+	LBM 		Lean body mass
+	RCC 		Red cell count
+	WCC 		White cell count
+	Hc 		Hematocrit
+	Hg 		Hemoglobin
+	Ferr 		Plasma ferritin concentration
+	BMI 		Body mass index = weight/height^2
+	SSF 		Sum of skin folds
+	%Bfat 		% body fat
+```{r}
+install.packages("GGally")
+```
+
+@TODO pytanie o obserwacje, czy to nie wszystko? 
+
+
+
+Zadanie1
 Zadanie 1. Wczytaj i obejrzyj zbiór danych dotyczący sportowców, który znajdziesz tutaj. Odpowiedz na poniższe pytania:
 
-* Ile ma obserwacji, a ile zmiennych? Które zmienne są ilościowe, a które jakościowe?
-* Jaka jest średnia oraz wariancja każdej ze zmiennych ilościowych?
-* Które zmienne ilościowe są najbardziej skorelowane, które najsłabiej, a które mają najsilniejszą korelację ujemną?
+    Ile ma obserwacji, a ile zmiennych? Które zmienne są ilościowe, a które jakościowe?
+    Jaka jest średnia oraz wariancja każdej ze zmiennych ilościowych?
+    Które zmienne ilościowe są najbardziej skorelowane, które najsłabiej, a które mają najsilniejszą korelację ujemną?
+
+Zmienne jakościowe:
+SEX, SPORT, 
+Zmienne ilościowe:
+RCC, WCC, Hc, Hg, Ferr, BMI, SSF, Bfat
+
+```{r}
+install.packages('corrplot')
+```
+```{r}
+library(GGally)
+
+ais <- read.delim("~/Matematyka/SAD/laby2020/ais.txt", sep="\t")
+head(ais[-1][-1])
+head(apply(ais[-1][-1], 1, sd))
+head(apply(ais[-1][-1], 1, mean))
+
+cor(ais[-1][-1])
+d <- ais[-1][-1]
+names(d) <- c('Height in cm','Weight in kg','mean body mass','Red cell count', 'White cell count', 'Hematocrit', 
+'Hemoglobin', 'Plasma ferritin', 'Body mass index', 'Sum of skin folds', 'Body fat')
+M <- cor(d) # get correlations
+
+library('corrplot') #package corrplot
+corrplot(M, method = "circle") #plot matrix
+#@todo BMI powinien zależeć po weight
+```
+```{r}
+ggpairs(ais, aes(col=Sex), columns=c(9, 10, 5, 13))  
+```
+
+
+Zadanie2.
+Zadanie 2 Zadanie przykładowe. Wykorzystaj regresję liniową, aby zbadać zależność wagi sportowców (Wt) od ich wzrostu (Ht). Sprawdź, czy zależność jest statystycznie istotna i znajdź przedział ufności na poziomie 95% dla współczynnika β1. Wykorzystaj wzory podane na slajdach do Wykładu 6. Następnie porównaj swoje wyniki z otrzymanymi za pomocą funkcji lm(). Wykorzystaj funkcję predict(), aby otrzymać przedział ufności na poziomie 95% dla sportowca o wzroście 180 cm.
+
+```{r}
+ais <- read.table("~/Matematyka/SAD/laby2020/ais.txt", header = T)
+attach(ais)
+mean(Ht)
+```
+```{r}
+library(ggplot2)
+cov_wt_ht = cov(Ht, Wt)
+st_wt = sd(Wt)
+st_ht = sd(Ht)
+beta1_a = cov_wt_ht*st_wt / st_ht
+#print(beta1_a)
+
+beta1 <- sum((Ht-mean(Ht))*(Wt - mean(Wt)))/sum((Ht - mean(Ht))^2)
+print(beta1)
+
+beta0 <- mean(Wt) - beta1*mean(Ht)
+print(beta0)
+
+ggplot(ais, aes(x=Ht, y=Wt)) + geom_point() + geom_abline(slope=beta1, intercept=beta0, col='red')
+```
+```{r}
+predykcja_Wt <- beta0 + beta1 * Ht 
+r <- Wt - predykcja_Wt
+qqnorm(r) # wektor residum, na jego podstawie mozemy sprawdzić, czy sum ma rozkład normalny
+
+```
+
+```{r}
+sigma2 <- sum(r^2)/(length(Ht)-2)  # u nas n = dlugosc wektora Ht, k = 1
+sigma <- sqrt(sigma2)
+print(sigma) # estymator nieobciazony wariancji nie występowanie błędu systematycznego
+```
+Jeżeli odchylenie standardowe $\sigma$ jest równe zero, to znaczy że przeprowadziliśmy prostą dokładnie przez wszystkie punktu, wieć wyjaśniliśmy  całą informację zawartą w zmiennej $Y$
+
+
+```{r}
+X <- cbind(1, Ht)
+XTX <- t(X) %*% X  
+XTX
+```
+Teraz obliczamy wektor $w$, korzystająć z funkcji solve():
+```{r}
+e_1 <- c(0, 1)
+w <- solve(XTX, e_1)
+```
+```{r}
+statystyka_t <- beta1/(sigma*sqrt(w[2])) #statystyka  testowa
+p_wartosc <- 2*pt(-statystyka_t, length(Ht)-2) 
+print(p_wartosc)
+```
+Obliczamy $p$-wartość równą 9.638647e-43, wskazując, że nasze dane bardzo silnie świadczą o istnieniu zależności między wzrostem a wagą.
+
+Skonstruujemy teraz przedział ufności dla parametru $\beta_1$
+```{r}
+alpha <- 0.05
+z <- qnorm(1 - alpha/2)
+c <- z * sqrt(w[2]) * sigma
+przedzial_ufnosci <- c(beta1 - c, beta1 + c)
+```
+
+```{r}
+
+```
+
+Przedział ufności na poziome $0.95$ dla średniej zależności pomiędzy wzrostem w centrymetrach a wagą w kilogramach jest równy $(0.9932748, 1.240959)$, ponieważ ten przedział jest stosunkowo wąski, to możemy mieć duża pewność do do wartośći tego modelu. 
+```{r}
+detach(ais)
+```
+
+```{r}
+model <- lm(Wt ~ Ht, ais)
+```
+
+```{r}
+summary(model)
+```
+```{r}
+confint(model)
+```
+
+
+```{r}
+predict(model, data.frame('Ht'=180), interval='prediction')
+```
+
+***Zadanie 3.***
+Regresja wieloraka. Za pomocą regresji liniowej zbadaj zależność wagi sportowca od wszystkich pozostałych zmiennych ilościowych. Które zmienne mają najsilniejszy wpływ na procent tkanki tłuszczowej? Czy lepiej ocenić to na podstawie kolumny ‘Estimate’, ‘Std. Error’, ‘t value’, czy p-wartości?
+
+

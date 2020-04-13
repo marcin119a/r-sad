@@ -1,0 +1,129 @@
+---
+title: "Lab5: Testowanie wielu hipotez"
+author: "Michał Ciach, Anna Macioszek"
+date: "March 15, 2020"
+output: html_document
+---
+
+Jezeli plik otwiera sie bez polskich liter, otworzcie go jeszcze raz uzywajac "Reopen with encoding" i wybierzcie UTF-8.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include=F)
+```
+
+**Zadanie 1.** Wygeneruj 1000 prób po 10 obsrwacji z rozkładu normalnego o średniej 0.5 i wariancji 1 i kolejne 1000 prób o średniej -0.5 i takiej samej wariancji. Porównaj moc testu t Studenta i testu rang Wilcoxona na poziomie istotności α=0.05. Jakie są założenia tych testów? Czy w tym przypadku są spełnione? Który test działa w tej sytuacji lepiej i dlaczego? Porównaj swoje wyniki dla testu t Studenta z kalkulatorem mocy tego dostępnym tutaj.
+Wskazówka 1: Funkcje do przeprowadzania testów w R zwracają listy zawierające wiele przydatnych informacji. Na przykład, mając wektory X oraz Y, p-wartość z testu t Studenta na tych dwóch wektorach możemy otrzymać pisząc ```{r}t.test(X, Y)$p.value lub wynik_testu <- t.test(X, Y)```, a następnie wynik_testu$p.value.
+
+```{r}
+proba1 <- replicate(1000, rnorm(10, 0.5))
+proba2 <- replicate(1000, rnorm(10, -0.5, 1))
+
+t_p_values <- sapply(1:ncol(proba1), function(i) t.test(proba1[,i], proba2[,i], var.equal = T)$p.value)
+```
+
+Powyżej, po kolei, dzieją się następujące rzeczy:
+
+    Wywołujemy funkcję sapply na wektorze 1:ncol(proba1), czyli na wektorze kolejnych liczb naturalnych od 1 do liczby kolumn macierzy proba1.
+    Dla każdej liczby z tego wektora wywołujemy funkcję, która jest napisana od razu w wywołaniu funkcji sapply. Ta wewnętrzna funkcja przyjmuje liczbę i, a następnie za pomocą testu t Studenta porównuje i-te kolumny macierzy proba1 oraz proba2. Nastepnie z wyniku testu bierzemy jedynie p-wartość - zwróć uwagę na znak dolara za wywołaniem funkcji t.test.
+
+
+Wikipedia:
+O ile test t-Studenta sprawdza hipotezę zerową o równości średnich arytmetycznych w odpowiadających im populacjach, test Wilcoxona weryfikuje równość median. 
+
+```{r}
+w_p_values <- sapply(1:ncol(proba1), function(i) wilcox.test(proba1[,i], proba2[,i])$p.value)
+```
+
+```{r}
+sum(t_p_values < w_p_values)
+```
+
+
+```{r}
+library(ggplot2)
+dane_do_wykresu <- data.frame('Test'=rep(c('Student', 'Wilcox'), each=1000), 'p_wartosc' = c(t_p_values, w_p_values))
+ggplot(dane_do_wykresu) + geom_histogram(aes(x=p_wartosc, fill=Test), binwidth=0.01) + theme_minimal()
+```
+
+
+W komórce powyżej w pierwszym kroku, za pomocą komendy t_p_values < w_p_values, tworzony jest wektor logiczny długości 100. Następnie zostają wysumowane jego wartości, gdzie wartość TRUE jest liczona jako 1, a FALSE jako 0. Dla 700 prób na 1000 test t dał niższą p-wartość niż test rang Wilcoxona. Czy potrafisz wyjaśnić ten fakt?
+
+Sprawdźmy teraz moce obu testów. Na początku stworzymy wektory które powiedzą nam w których próbach każdy z testów odrzucił hipotezę H0
+na poziomie istotności $\alpha$
+```{r}
+alpha <- 0.05
+student_odrzucil <- t_p_values < alpha
+wilcox_odrzucil <- w_p_values < alpha
+print(length((t_p_values)))
+```
+A teraz zobaczmy propozycję odrzuconych hipotez $H_0$, czyli poprawnie wykrytych różnic pomiędzy grupami.
+```{r}
+mean(student_odrzucil)
+```
+```{r}
+mean(wilcox_odrzucil)
+```
+
+
+**Zadanie 2.** *(podchwytliwe).*  W danych `Zarobki.csv` znajdują się miesięczne zarobki losowo wybranych obywateli krajów A i B. 
+Wykorzystując poznane dotychczas techniki analizy danych, spróbuj odpowiedzieć na pytanie: *Obywatele którego kraju są bogatsi?*. 
+
+
+```{r}
+zarobki <- read.csv("~/Matematyka/SAD/laby2020/Zarobki.tsv", sep='\t')
+A = subset(zarobki, Kraj == 'A', select = c(Kraj, Zarobki))
+B = subset(zarobki, Kraj == 'B', select = c(Kraj, Zarobki))
+head(A)
+head(B)
+# test sprawdzający czy H_0 średnię są takie same
+t.test(A$Zarobki, B$Zarobki, var.equal = T)
+# test sprawdzająćy czy mediana jest taka sama
+wilcox.test(A$Zarobki, B$Zarobki, alternative = "greater")
+
+```
+
+### Testowanie wielokrotne
+
+
+**Zadanie 3.** Zainstaluj i załaduj bibliotekę `ISLR`. Załaduj dane `Khan` za pomocą komendy `data(Khan)` (zwróć uwagę na brak cudzysłowu).  
+```{r}
+install.packages("ISLR")
+```
+
+Dane dotyczą ekspresji genów w zależności od rodzaju nowotworu. Wyniki pomiaru ekspresji genów zapisane są w polu `Khan$xtrain`, a rodzaj nowotworu w polu `Khan$ytrain`. Więcej informacji na temat danych możesz znaleźć w dokumentacji, którą możesz wyświetlić w Rstudio wpisując w konsolę `?Khan` lub `help(Khan)`. 
+```{r}
+# Co to jest eksprecji genów?
+```
+
+  - Wybierz te wiersze z macierzy `Khan$xtrain`, które odpowiadają rodzajowi 2 oraz 4, i zapisz je w dwóch macierzach.
+```{r}
+library(ISLR)
+#head(subset(Khan, Khan$xtrain==2, select=())
+#A = subset(Khan, Kraj == 'A', select = c(Kraj, Zarobki))
+#View(Khan$ytrain)
+#dat.te=data.frame(x=Khan$xtest, y=as.factor(Khan$ytest))
+View(dat.te)
+```
+  - Dla każdego genu sprawdź, czy jego ekspresja zależy od rodzaju nowotworu, używając funkcji `t.test` do przeprowadzenia testu Welsha (czyli testu t Studenta dla prób o różnych wariancjach). Zapisz otrzymane p-wartości w wektorze.
+  
+  
+  
+  - Przeprowadź korekcje p-wartości metodami Bonferroniego, Holma, oraz Benjamini-Hochberg. 
+
+**Zadanie 4.** Jaką metodę korekcji p-wartości (lub jej brak) zastosowalibyśmy do poniższych zadań badawczych?
+
+  1. Chcemy znaleźć geny, które są potencjalnym celem terapii genowej, i mamy środki na kilkadziesiąt dalszych eksperymentów
+  2. Chcemy znaleźć geny, które mogą być potencjalnym celem niesamowicie drogiego eksperymentu mającego na celu przetestowanie nowej metody leczenia
+  3. Chcemy wstępnie określić, które geny mogą mieć związek z danym typem nowotworu
+  4. Chcemy ogólnie scharakteryzować, które geny mają różną ekspresję w różnych typach nowotworu
+  5. Chcemy znaleźć geny markerowe, czyli takie, które pozwolą na efektywne rozróznienie typu nowotworu 
+
+
+**Zadanie 5.** Stwórz macierz o wymiarach 10x1000, taką, że obserwacje z pierwszych stu kolumn są wylosowane z rozkładu $\mathcal{N}(1, 1)$, a z pozostałych 900 z rozkładu $\mathcal{N}(0, 1)$. Następnie:
+
+  - Dla każdej kolumn przeprowadź test t Studenta na to, czy średnia jest większa od 0, i zapisz otrzymane p-wartości w wektorze.
+  - Przeprowadź korekcje p-wartości za pomocą metod Bonferroniego, Holma, oraz Bejnamini-Hochberga, korzystając z funkcji `p.adjust`. 
+  - Obejrzyj rozkłady p-wartości oraz q-wartości (skorygowanych p-wartości) na histogramach.
+  - Zapisz oryginalne p-wartości i trzy wektory q-wartości w ramce danych lub macierzy o 4 kolumnach.
+  - Dla każdej kolumny oblicz moc testu, False Discovery Rate, False Positive Rate, accuracy oraz precision przyjmując poziom istotności 0.05. Zinterpretuj wyniki.
+
