@@ -1,9 +1,26 @@
 ```{r}
+library(xtable)
 X = c(0, 30, 10, 15, 5, 25, 35, 40)
-print(mean(X))
-print(mean(Y))
 Y = c(4, 1, 2, 2, 3, 1, 0, 1)
 
+
+print(mean(X))
+print(mean(Y))
+
+#head(Y - mean(Y))
+
+outcomes = data.frame(
+  X, 
+  Y, 
+  Y - mean(Y), 
+  X - mean(X),
+  (X - mean(X))^{2},
+   Y - mean(Y) *  X - mean(X)
+)
+
+zadanie2= table(outcomes)
+View(outcomes)
+#print(xtable(zadanie2, type = "latex"), file = "filename2.tex")
 
 beta1 <- sum((X-mean(X))*(Y - mean(Y)))/sum((X - mean(X))^2)
 print(beta1)

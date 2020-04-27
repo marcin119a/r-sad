@@ -109,6 +109,8 @@ Teraz obliczamy wektor $w$, korzystająć z funkcji solve():
 e_1 <- c(0, 1)
 w <- solve(XTX, e_1)
 ```
+
+
 ```{r}
 statystyka_t <- beta1/(sigma*sqrt(w[2])) #statystyka  testowa
 p_wartosc <- 2*pt(-statystyka_t, length(Ht)-2) 
@@ -148,8 +150,130 @@ confint(model)
 ```{r}
 predict(model, data.frame('Ht'=180), interval='prediction')
 ```
+Widzimy, że sportowcy o wzroście 180 kg ważą na ogół od 57.6 do 92.13kg, przy czym średnio 74.89 kg. Wykorzystając z funkcji ```pedict()```
+
+```{r}
+przedzial_ufnosci <- predict(model, data.frame('Ht'=seq(120, 230, by=1)), interval='prediction')
+przedzial_ufnosci <- as.data.frame(przedzial_ufnosci)
+przedzial_ufnosci$Wt <- seq(120, 230, by=1)
+```
+
+```{r}
+ggplot(ais, aes(x=Ht, y=Wt)) + geom_point() + geom_abline(slope=beta1, intercept=beta0, col='red') + geom_ribbon(aes(x=Wt, ymin=lwr, ymax=upr), data=przedzial_ufnosci, alpha=0.1)
+```
+
 
 ***Zadanie 3.***
 Regresja wieloraka. Za pomocą regresji liniowej zbadaj zależność wagi sportowca od wszystkich pozostałych zmiennych ilościowych. Które zmienne mają najsilniejszy wpływ na procent tkanki tłuszczowej? Czy lepiej ocenić to na podstawie kolumny ‘Estimate’, ‘Std. Error’, ‘t value’, czy p-wartości?
 
+```{r}
+head(ais)
+#head(ais)
+#attach(ais)
+#model <- lm(Wt ~ . - Sex + Sport , ais)
+model <- lm(Wt ~ RCC + WCC + Hc + Hg + Ferr + BMI + SSF + X.Bfat + LBM + Ht + Wt)
+summary(model)
+
+```
+
+```
+	Sport 		Sport
+	Sex 		male or female
+	Ht 		Height in cm
+	Wt 		Weight in kg
+	LBM 		Lean body mass
+	RCC 		Red cell count
+	WCC 		White cell count
+	Hc 		Hematocrit
+	Hg 		Hemoglobin
+	Ferr 		Plasma ferritin concentration
+	BMI 		Body mass index = weight/height^2
+	SSF 		Sum of skin folds
+	%Bfat 		% body fat
+```
+```{r}
+confint(model)
+```
+
+Jak duży wpływ na wagę mają czynniki, których nie obserwujemy w danych (np. czynniki genetyczne)?
+
+Jaka jest średnia różnica pomiędzy wagą dwóch sportowców, którzy różnią się wzrostem o 1 cm, a wszystkie pozostałe cechy mają identyczne? 
+```
+\beta_0 = 
+```
+Czy ta różnica jest większa, czy mniejsza niż w poprzednim zadaniu?
+
+***Wskazówka.*** Jeśli chcemy modelować zmienną Y
+jako kombinację liniową zmiennych X1 i X2, to piszemy formułę Y ~ X1 + X2. Jeśli chcemy wykorzystać wszyskie zmienne, to piszemy Y ~ . (kropka oznacza “wszystkie kolumny tabeli poza Y”). Jeśli chcemy wykluczyć zmienną Z, możemy napisać Y ~ . - Z.
+
+
+***Zadanie 4***. Stwórz model liniowy wyjaśniający wagę za pomocą wszystkich zmiennych poza zmienną Sport. Zinterpretuj wyniki. Czy z modelu wynika, że sportowcy różnych płci różnią się wagą? Dlaczego otrzymaliśmy taki rezultat?
+Czy taki model przewiduje, że zależność pomiędzy wzrostem a wagą może być różna dla różnych płci?
+
+Wskazówka. Funkcja ````summary()``` wyświetla informacje dotyczące zmiennych jakościowych w polu ‘Coefficients’ osobno dla każdego poziomu. Nazwa odpowiedniego współczynnika powstaje przez sklejenie nazwy zmiennej i nazwy poziomu. W naszym przypadku w polu ‘Coefficients’ znajduje się wiersz ‘Sexmale’, odpowiadający poziomowi ‘male’ kolumny ‘Sex’ z danych ‘ais’. Pole ‘Estimate’ mówi, w jaki sposób zmieni się waga sportowca, jeśli stanie się on mężczyzną przy zachowaniu wszystkich pozostałych cech na ustalonym poziomie. 
+
+```{r}
+
+```
+
+
+Zadanie5.
+
+W ocenie modelu liniowego pomoże nam statystyka R2, zwana współczynnikiem determinacji, i zdefiniowana jako wariancja zmiennej Y wyjaśniona przez nasz model: 
+```{r}
+x = data(anscombe)
+attach(anscombe)
+library(ggplot2)
+
+m1 <- lm(y1 ~ x1)
+
+
+ggplot(anscombe, aes(x = x1, y = y1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red")
+summary(m1)# Multiple R-Square: 0.6665
+```
+
+Pierwszy wykres jest prostą regresją linową, widać zależnosć linową danych. 
+
+
+```{r}
+m2 <- lm(y2 ~ x2)
+
+ggplot(anscombe, aes(x = x2, y = y2)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "blue")
+summary(m2)# Multiple R-Square: 0.6662
+
+```
+
+Drugi wykres zależność między nimi nie jest linowa. Dane nie pochodzą z rozkładu normalnego
+
+```{r}
+
+m3 <- lm(y3 ~ x3)
+summary(m3)# Multiple R-Square: 0.6663
+
+ggplot(anscombe, aes(x = x3, y = y3)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "pink")
+```
+
+
+Trzeci wykres, zależność jest linowa, jednak powinniśmy mieć inną prostą regresji.  Obecna sytuacja jest spowodowana przez outlier. 
+
+```{r}
+m4 <- lm(y4 ~ x4)
+summary(m4) # Multiple R-Square: 0.6667
+
+ggplot(anscombe, aes(x = x4, y = y4)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "yellow")
+
+```
+
+
+Czwarty wykres, reprezentuje próbkę w której mamy jednen punkt, który wpływa na współcznnik $\beta_1$, pozostałe punkty nie wskazują na żadne linowe związki między zmiennymi.
+
+Jak widać na przykładach statystyka $R^{2}$ jest bliska 1(odpowiednio 0.6665, 0.6663,  0.6662, 0.6667), jednak nie powinniśmy twiedzić, że modele 2, 3 i 4 to dobre modele regresji linowej. 
 

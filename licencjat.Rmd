@@ -1,0 +1,19 @@
+```{r}
+simCIM <- read.delim("https://students.mimuw.edu.pl/~mw404851/logs_1000_20200407(7)(2).csv", sep=",")
+
+#View(simCIM)
+
+progi <- seq(0.4, 0.65, length.out = 20)
+
+macierz_predykcji <- sapply(progi, function(p) prawdopodobienstwa > p) 
+
+head(simCIM$X0)
+head(simCIM$X0)
+P <- sum(simCIM$X0 == 1)  
+N <- sum(simCIM$X0 == 0)
+print(P)
+print(N)
+TPR <- apply(macierz_predykcji, 2, function(x) sum(x & simCIM$X0==1))/P
+FPR <- apply(macierz_predykcji, 2, function(x) sum(x & simCIM$X0==0))/N
+ggplot(data.frame('TPR' = TPR, 'FPR' = FPR, 'p' = progi)) + geom_line(aes(x=FPR, y=TPR)) + geom_abline(slope=1, intercept=0, alpha=0.2) + theme_minimal() 
+```

@@ -77,7 +77,7 @@ library(xtable)
 n = 6
 xj_exp = sort(c(2.62, 0.92, 1.75, 4.84, 0.26, 1.27))
 
-uj = xj
+uj = xj_exp
 
 
 

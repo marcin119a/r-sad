@@ -1,0 +1,111 @@
+
+W tym zadaniu spróbujemy przewidzieć, czy wynik giełdy w danym dniu będzie dodatni czy ujemny na podstawie wyników z pięciu poprzednich dni. 
+```{r}
+install.packages("ISLR")
+```
+
+W tym celu wykorzystamy regresję logistyczną. Regresja logistyczna została omówiona na Wykładzie 8. Elementarne wprowadzenie do regresji logistycznej można również usłyszeć tutaj
+
+```
+Year
+The year that the observation was recorded
+Lag1
+Percentage return for previous day
+Lag2
+Percentage return for 2 days previous
+Lag3
+Percentage return for 3 days previous
+Lag4
+Percentage return for 4 days previous
+Lag5
+Percentage return for 5 days previous
+Volume
+Volume of shares traded (number of daily shares traded in billions)
+Today
+Percentage return for today
+```
+
+```{r}
+library(ISLR)
+data("Smarket")
+head(Smarket)
+```
+
+
+Mamy do czynienia z 9 zmiennymi, z których ostatnia jest jakościowa, a pozostałe są ilościowe. Sprawdzamy poziomy zmiennej jakościowej Direction:
+```{r}
+levels(Smarket$Direction)
+```
+
+Możemy również sprawdzić wymiary naszej ramki danych komendą dim:
+```{r}
+dim(Smarket)
+```
+
+```{r}
+model <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5, Smarket, family = binomial)
+summary(model)
+```
+```{r}
+#confint(mode, level=0.99)
+confint(model)
+```
+Niech cecha  $X$ ma rozkład w populacji z nieznanym parametrem. $\theta $ Z populacji wybieramy próbę losową $(X_1, \ldots X_n)$ Przedziałem ufności o współczynniku ufności $1- \alpha$ nazywamy taki przedział $(\theta_1, \theta_2)$,  który spełnia warunek: 
+$$
+P(\theta_1 < \theta < \theta_2) = 1 - \alpha
+$$
+gdzie $\theta_1, \theta_2$ są funkcjami wyznaczonymi na podstawie próby loswoej. 
+Jest wielkością, którą można interpretować w następujący sposób: jest to prawdopodobieństwo wyznaczenia takiego przedziału, że rzeczywista wartość parametru θ $$\theta$$ w populacji znajdzie się w tym przedziale. Im większa wartość tego współczynnika, tym szerszy przedział ufności, a więc mniejsza dokładność estymacji parametru.
+```{r}
+prawdopodobienstwa <- predict(model, type = "response")
+```
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+ggplot(data = data.frame('P' = prawdopodobienstwa, 'Direction' = Smarket$Direction)) + geom_boxplot(aes(x = Direction, y = P)) + theme_minimal()
+```
+
+Wykres kubełkowy (boxplot) czytamy następująco: Pozioma gruba kreska zaznacza medianę, pudełko zaznacza przedział międzykwartylowy (czyli przedział od kwantylu na poziomie 0.25 do kwantylu na poziomie 0.75), “wąsy” mają długość równą półtorej długości przedziału międzykwartylowego (chyba że miałyby wykroczyć poza najmniejszą lub największą wartość w danych, wtedy je się skraca), a kropki oznaczają pozostałe obserwacje. W przypadku rozkładu normalnego zakres wąsów odpowiada 99% prawdopodobieństwa. Wykres kubełkowy to bardzo powszechny sposób przedstawiania danych, ale może być bardzo zdradliwy. Więcej na ten temat można przeczytać 
+
+Z powyższych wykresów widać, że model działa raczej średnio - nawet gdy zmienna Direction przyjmuje wartość Down, to mediana prawdopodobieństwa ‘Up’ jest większa niż 1/2. Jedyne co nas pociesza, to że mediana tego prawdopodobienstwa jest przynajmniej nieco wyższa gdy prawdziwą wartością rzeczywiście jest ‘Up’.
+
+. Wykorzystamy w tym celu funkcję ifelse(A, B, C), która przyjmuje wektor logiczny A, i dla każdej współrzędnej tego wektora zwraca B gdy współrzędna ta ma wartość TRUE, a C, gdy współrzędna ma wartość FALSE.
+```{r}
+predykcja <- ifelse(prawdopodobienstwa  > 0.5, "Up", "Down")
+```
+
+
+```{r}
+conf.matrix <- table('Pred'=predykcja, 'True'=Smarket$Direction)
+conf.matrix
+```
+
+```{r}
+accuracy <- sum(diag(conf.matrix))/sum(conf.matrix)  # suma wartości na przekątnej dzielona przez sumę wszystkich wartości macierzy
+sensitivity <- conf.matrix[2, 2]/(conf.matrix[1,2]+conf.matrix[2,2])
+specificity <- conf.matrix[1, 1]/(conf.matrix[1,1]+conf.matrix[2,1])
+precision <- conf.matrix[2, 2]/(conf.matrix[2,1] + conf.matrix[2, 2])
+c('Dokładność' = accuracy, 'Czułość' = sensitivity, 'Specyficzność' = specificity, "Precyzja" = precision)
+```
+Jak widać, ogółem nasz klasyfikator jest właściwie beznadziejny - jego dokładność wynosi 0.53, czyli jest niewiele lepsza niż klasyfikatora losowego. Ma jednak jedną mocną stronę: **wysoka czułość** oznacza, że skutecznie wykrywa możliwość wzrostu na giełdzie. Niestety, nie oznacza to, że możemy w pełni ufać jego wskazaniom: nawet jeśli nasz klasyfikator sygnalizuje wzrost, to mamy jedynie **53%** prawdopodobieństwa, że wzrost rzeczywiście nastąpi. Z kolei jeżeli na giełdzie wystąpi spadek, to mamy jedynie 19% prawdopodobieństwa że klasyfikator nas o tym ostrzeże.
+
+```{r}
+progi <- seq(0.4, 0.65, length.out = 20)
+macierz_predykcji <- sapply(progi, function(p) prawdopodobienstwa > p) 
+```
+
+```{r}
+P <- sum(Smarket$Direction == "Up")  
+N <- sum(Smarket$Direction == "Down")
+TPR <- apply(macierz_predykcji, 2, function(x) sum(x & Smarket$Direction=='Up'))/P
+FPR <- apply(macierz_predykcji, 2, function(x) sum(x & Smarket$Direction=='Down'))/N
+```
+
+```{r}
+ggplot(data.frame('TPR' = TPR, 'FPR' = FPR, 'p' = progi)) + geom_line(aes(x=FPR, y=TPR)) + geom_abline(slope=1, intercept=0, alpha=0.2) + theme_minimal() 
+```
+  

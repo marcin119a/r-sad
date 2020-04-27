@@ -124,6 +124,10 @@ Wskazówka: Postaraj się, aby kod służący do otrzymania wektora zawierające
 #head(zbior_testowy)
 wynik <- knn(zbior_treningowy[,-1], zbior_testowy[,-1], zbior_treningowy[,1], k=3)
 mean(wynik==zbior_testowy[,1])
+head(zbior_testowy)
+## Quantity to pierwsza kolumna
+acc = sapply(1:15, function(k) mean(zbior_testowy[,1] == knn(zbior_treningowy[,-1], zbior_testowy[,-1], zbior_treningowy[,1], k=k)))
+gplot(1:15, acc)
 ```
 
 ```{r}

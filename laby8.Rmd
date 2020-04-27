@@ -1,0 +1,123 @@
+---
+title: "Lab8 - Regresja liniowa cz. 2"
+author: "Michał Ciach, Anna Macioszek"
+date: "April 18, 2020"
+output: html_document
+---
+
+
+### Diagnostyka sportowców
+
+
+***Zadanie 1.***
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+bats <- read.table("~/Matematyka/SAD/laby2020/bats.csv", header = T, sep=',')
+head(bats)
+ggplot(bats, aes(x=days, y=forearm.length)) + geom_point() + theme_minimal()
+```
+
+Widzimy, że zależnosć nie jest linowa. Wygląda za to z grubsza jak ```Y= log(X)```. Zobaczmy zatem, co się stanie jeśli przestawimy w zależność od ```log(x)```
+```{r}
+ggplot(bats, aes(x=log(days), y=forearm.length)) + geom_point() + theme_minimal()
+```
+
+Intepretacja 
+
+
+Zależność po transformacji wygląda na bardziej liniową niż wcześniej. Transformacja logarytmiczna ma dodatkowo tę zaletę, że jest łatwo interpretowalna: długość ramienia zwiększy się o 1 mm, gdy wiek wzrośnie około 2.7 raza, ponieważ ```log(X e) = log(X) + 1 = Y + 1```
+
+Inną popularną transformacją jest transformacja Boxa-Coxa, w której dla pewnego parametru λ
+robimy przekształcenie 
+
+Funkcja boxcox z pakietu MASS wykonuje transformację Boxa-Coxa zmiennej zależnej Y. Jej składnia jest bardzo podobna do funkcji lm():
+
+```{r}
+library(MASS)
+bc <- boxcox(forearm.length~days, data=bats, lambda=seq(0, 4, by=1/10))
+```
+  
+
+
+**Zadanie 2.** Załaduj zbiór danych dotyczący sportowców, który analizowaliśmy na poprzednich zajęciach. Utwórz model liniowy wyjaśniający zmienność wagi (Wt) w zależności od wysokości (Ht) i przeprowadź diagnostykę modelu. Czy założenia pozwalające na sensowną estymację parametrów $\beta$ są spełnione? Co z założeniami, które pozwalają na ocenę tego, czy na podstawie danych możemy stwierdzić, że $\beta \neq 0$? Patrząc na odstępstwa od założeń LINE, jakich efektów możemy się spodziewać, jeśli chodzi o przedziały ufności dla predykcji? Zweryfikuj swoje przypuszczenia, tworząc wykres zależności wagi od wysokości, na którym zaznaczysz prostą regresji i przedziały ufności.
+
+```{r}
+  
+```
+
+**Zadanie 3.** *Ćwiczenie ggplot2.* Korzystając z wyników poprzedniego zadania, utwórz wykres punktowy zmiennej Ht w zależności od Wt, w którym:
+    - Zamiast punktów, wykreślisz numery obserwacji,
+    - Zaznaczysz linię reprezentującą predykcję modelu,
+    - Zaznaczysz przedział ufności dla predykcji,
+    - Dla każdej obserwacji poprowadzisz linię od prawdziwej wartości zmiennej Ht do wartości predykowanej.
+    
+Wykorzystaj fakt, że funkcja `lm` zwraca wartości predykowane w polu o nazwie `fitted.values`. Do stworzenia wykresu wykorzystaj geometrie `geom_segment`, `geom_text` (lub `geom_label` lub `geom_shadowtext` z pakietu `shadowtext`) oraz `geom_ribbon`. Zwróć uwagę na to, że kolejność dodawania warstw ma znaczenie: każda kolejna jest nakładana na poprzednie. 
+
+Wykresy z zaznaczonymi numerami obserwacji są bardzo przydatne gdy chcemy zidentyfikować obserwacje odstające.
+
+**Zadanie 4.** Utwórz model wyjaśniający zmienność procentowej zawartości tkanki tłuszczowej w ciele (zmienna X.Bfat) za pomocą wszystkich pozostałych zmiennych, wliczając w to zmienne jakościowe (wykorzystaj formułę `X.Bfat ~ .`). Następnie:
+    - Przeprowadź diagnostykę modelu. Jakie są główne odstępstwa od zasady LINE? Czy w danych znajdują się obserwacje odstające? 
+    - Sprawdź wyniki funkcji `summary`. Które zmienne mają znaczenie dla przewidywania procentu tkanki tłuszczowej? 
+    
+Zwróć szczególną uwagę na zmienną Sport i spróbuj zinterpretować wynik. Pamiętaj, że parametr $\beta$ odpowiadający danemu poziomowi zmiennej jakościowej oznacza zmianę zmiennej zależnej, która ma miejsce wtedy, gdy zmienimy poziom zmiennej objaśnianej z poziomu bazowego na ten odpowiadający parametrowi $\beta$.
+
+
+**Zadanie 5.** Przypomnij sobie informacje dotyczące błędu treningowego z Laboratorium 6 i odpowiadającego mu wykładu. Następnie:   
+
+  - Utwórz model wyaśniający procent tkanki tłuszczowej, ale tym razem wykorzystaj jedynie co drugą obserwację ze zbioru danych. Możesz wykorzystać argument `subset` funkcji `lm`.  
+  - Wykorzystaj funkcję `predict` do przewidzenia wartości zmiennej X.Bfat dla pozostałych obserwacji. Tutaj niestety nie ma argumentu `subset`.   
+  - Oblicz błąd średniokwadratowy treningowy oraz testowy (jeśli nie pamiętasz, co to takiego, to przypomnij sobie Wykład 5).
+
+Po wykonaniu powyższych punktów, wytrenuj nowy model, objaśniający zmienną X.Bfat za pomocą zmiennych Sport, Sex, SSF, LBM, Wt. Nowy model wytrenuj na tym samym zbiorze treningowym co poprzedni. Następnie:  
+
+  - Porównaj wartości $R^2$ w pełnym i w mniejszym modelu. Czy mniejszy model wyjaśnia dużo mniej zmienności zmiennej objaśnianej niż pełny model?
+  - Ponownie wykorzystaj funkcję `predict` do otrzymania predykcji dla zbioru testowego.
+  - Oblicz błąd średniokwadratowy treningowy oraz testowy.
+  
+Który błąd wzrósł, a który zmalał? Dlaczego? Jak nazywa się to zjawisko?
+
+*Wskazówka 1.* Żeby łatwo wybrać potrzebne podzbiory danych, warto stworzyć wektor indeksów zbioru treningowego `to_train <- seq(2, nrow(ais), by=2)`. Wówczas zbiór treningowy wybieramy pisząc `ais[to_train, ]`, a zbiór testowy wybieramy pisząc `ais[-to_train, ]`.  
+*Wskazówka 2.* Żeby otrzymać predykcję w mniejszym modelu, należy wybrać z danych obserwacje należące do zbioru testowego, ale nie musimy wybierać kolumn odpowiadających zmiennym objaśniającym. Funkcja `predict` sama wybierze te kolumny, których potrzebuje. Wystarczy zatem napisać `small_model_fit <- predict(small_model, ais[-to_train, ])`.
+
+
+
+### Zadania dodatkowe.
+
+**Zadanie 7.** *Dyfuzja - przykład autokorelacji.* W tym zadaniu rozpatrzymy cząstkę zawieszoną w płynie, która porusza się [ruchem Browna](https://pl.wikipedia.org/wiki/Ruchy_Browna) z dryfem. Założymy mianowicie, że cząstka z jednej strony opada ruchem jednostajnie przyspieszonym, a z drugiej, że wysokość na jakiej się znajduje podlega chaotycznym zaburzeniom. Wysymulujemy ruch cząstki i zastanowimy się, w jaki sposób wykorzystać regresję liniową do estymacji jej przyspieszenia. Pomimo tego, że wstęp do tego zadania jest bardzo długi, to jest ono tak naprawdę bardzo proste. 
+
+Standardowy ruch Browna $B_t$ modeluje się za pomocą procesu Wienera, czyli w uproszczeniu takiego procesu, że $B(t+h) - B(t) \sim \mathcal{N}(0, h)$ (tutaj $h$ oznacza wariancję), a ponadto $B(t+h) - B(t)$ nie zależy od żadnej wcześniejszej zmiany $B(t) - B(t-h')$. Szczegółów można się dowiedzieć na kursie Wstęp do Analizy Stochastycznej lub w [artykule na Wikipedii](https://pl.wikipedia.org/wiki/Proces_Wienera).  
+My założymy dodatkowo, że cząsteczka opada, tak że średnia wysokość, na jakiej znajduje się w chwili $t$, to $-at^2/2$ dla dodatniej stałej $a$.  
+Połączymy opadanie z ruchem Browna, zakładając, że położenie cząstki $H(t)$ spełnia zależności $H(t+h) - H(t) \sim \mathcal{N}(-ah^2/2 -ath, h)$. Ponadto założymy, że w chwili 0 mamy na pewno $H(0) = 0$. Zauważ, że wynika stąd, że $H(t) \sim \mathcal{N}(-at^2/2, t)$. 
+
+Przyjmiemy stały krok czasowy, czyli $h = \text{const.}$, tak że nasze czasy $t$ mają postać $hi$ dla $i = 0, 1, \dots, n$.  
+Oznaczmy dla uproszczenia położenie cząstki $i$-tym kroku jako $H_i = H(hi)$. Mamy wówczas H_{i+1} - H_i \sim \mathcal{N}(-ah^2(i + 1/2), h)$.  
+
+Zmienne $H_1, \dots, H_n$ symulujemy w trzech prostych krokach:    
+
+  - Obliczamy średnie położenia $m_i = -at^2/2 = -a(hi)^2/2$ dla $i = 1, 2, \dots, n$. 
+  - Generujemy ciąg niezależnych zmiennych losowych $X_1, X_2, \dots, X_n \sim \mathcal{N}(0, h)$. Trzeba pamiętać, że $h$ jest tutaj wariancją, podczas gdy w funkcji `rnorm()` podajemy odchylenie standardowe. 
+  - Obliczamy sumę kumulatywną $Y_i = X_1 + X_2 + \dots + X_i$. Korzystamy w tym celu z funkcji `cumsum()`.  
+  
+Zmienna $H_i$ jest równa $m_i + Y_i$ dla $i = 1, 2, \dots, n$. Zmienna $H_0$ jest równa 0.   
+
+Poprawność tej procedury wynika z faktu, że $H_{i} - H_{i-1} \sim \mathcal{N}(-ah^2(i + 1/2), h) = -ah^2(i + 1/2) + \mathcal{N}(0, h) = -ah^2(i+1/2) + X_i$. Wystarczy teraz przekształcić $H_i = (H_i - H_{i-1}) + (H_{i-1} - H_{i-2}) + \dots + (H_1 - H_0) + H_0 = -a(hi)^2/2 + X_1 + \dots + X_i$.  
+
+Wybierz dowolną wartość przyspieszenia $a$ i wysymuluj zmienne $H_t$ dla $t = 0, 0.1, 0.2, 0.3, \dots, 5$.  
+Zapisz zmienne $t$ oraz $H_t$ w postaci *data frame*. Dołącz również kolumnę zawierającą kwadrat zmiennej $t$.   
+Przedstaw zależność $H_t$ od $t$ na wykresie liniowym.  
+
+Spróbuj teraz wyestymować przyspieszenie $a$ z otrzymanych w ten sposób danych. W tym celu zbuduj model liniowy, który wyjaśni zmienność $H_t$ za pomocą $t^2$. Uwaga: ważne, żeby tę ostatnią wartość mieć jako osobną kolumnę w danych - formuły typu `H ~ t^2` mają swoje własne, bardzo specyficzne znaczenie.   
+Zwróć uwagę, że wyestymowany parametr $\beta$ przybliża wartość $-a/2$, wobec czego $\hat{a} = -2\hat{\beta}$. Możesz wykorzystać wiedzę o tym, że $H_0 = 0$, dopasowując model bez wyrazu wolnego. Formuła modelu bez wyrazu wolnego to `H ~ 0 + t` lub `H ~ t - 1`.
+
+Żeby sprawdzić swoje wyniki, przedstaw otrzymaną zależność na wykresie.
+
+Stwórz teraz przedział ufności dla parametru $\beta$. Powtórz kilkukrotnie analizę i zobacz jak z symulacji na symulację zmieniają się wartości parametru $\beta$ oraz przedziały ufności. Czy coś się nie zgadza?
+
+Czemu wyniki są złe? Przeprowadź diagnostykę modelu. Spójrz na wykres Residuals vs Fitted i podziwiaj autokorelację błędów. 
+
+Jak temu zaradzić? W tym przypadku możemy usunąć autokorelację, robiąc model, który wyjaśni zmienność *różnic* $H_{i+1} - H_{i}$. Zgodnie z naszymi założeniami, takie różnice są niezależnymi zmiennymi losowymi, co gwarantuje spełnienie zasady LINE. Jest to częsta technika w analizie szeregów czasowych, czyli takich danych, które dotyczą procesu losowego obserwowanego przez pewien okres czasu. 
+

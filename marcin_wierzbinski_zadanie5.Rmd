@@ -1,0 +1,69 @@
+W ocenie modelu liniowego pomoże nam statystyka R2, zwana współczynnikiem determinacji, i zdefiniowana jako wariancja zmiennej Y wyjaśniona przez nasz model: 
+$$
+R^2 = \frac{\sum_{i=1}^n (\hat{y}_i - \bar{y}_i)^2}{\sum_{i=1}^n (y_i - \bar{y}_i)^2}.
+$$
+
+***Zadanie5***
+Załaduj dane anscombe za pomocą komendy data(anscombe). Dane mają postać macierzy z kolumnami $x_i$ oraz $y_i$ dla $i=1,2,3,4$
+Następnie:
+* Utwórz cztery modele linowe $y_i \sim x_i$
+* Porównaj współczynniki determinacji tych modeli. Współczynniki możesz znaleźć korzystając z funkcji summary.
+* Przedstaw zależność pomiędzy yi a xi na wykresie, i zaznacz na nim prostą regresji. Czy wszystkie modele są tak samo dobre?
+
+
+```{r}
+data(anscombe)
+attach(anscombe)
+library(ggplot2)
+
+m1 <- lm(y1 ~ x1)
+
+
+ggplot(anscombe, aes(x = x1, y = y1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red")
+summary(m1)# Multiple R-Square: 0.6665
+```
+
+Pierwszy wykres jest prostą regresją linową, widać zależnosć linową danych. 
+
+
+```{r}
+m2 <- lm(y2 ~ x2)
+
+ggplot(anscombe, aes(x = x2, y = y2)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "blue")
+summary(m2)# Multiple R-Square: 0.6662
+
+```
+
+Drugi wykres zależność między nimi nie jest linowa. Dane nie pochodzą z rozkładu normalnego
+
+```{r}
+
+m3 <- lm(y3 ~ x3)
+summary(m3)# Multiple R-Square: 0.6663
+
+ggplot(anscombe, aes(x = x3, y = y3)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "pink")
+```
+
+
+Trzeci wykres, zależność jest linowa, jednak powinniśmy mieć inną prostą regresji.  Obecna sytuacja jest spowodowana przez outlier. 
+
+```{r}
+m4 <- lm(y4 ~ x4)
+summary(m4) # Multiple R-Square: 0.6667
+
+ggplot(anscombe, aes(x = x4, y = y4)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "yellow")
+
+```
+
+
+Czwarty wykres, reprezentuje próbkę w której mamy jednen punkt, który wpływa na współcznnik $\beta_1$, pozostałe punkty nie wskazują na żadne linowe związki między zmiennymi.
+
+Jak widać na przykładach statystyka $R^{2}$ jest bliska 1(odpowiednio 0.6665, 0.6663,  0.6662, 0.6667), jednak nie powinniśmy twierdzić, że modele 2, 3 i 4 to dobre modele regresji linowej. 
