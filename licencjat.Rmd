@@ -1,7 +1,7 @@
 ```{r}
 simCIM <- read.delim("https://students.mimuw.edu.pl/~mw404851/logs_1000_20200407(7)(2).csv", sep=",")
 
-#View(simCIM)
+View(simCIM)
 
 progi <- seq(0.4, 0.65, length.out = 20)
 

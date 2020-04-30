@@ -109,3 +109,18 @@ FPR <- apply(macierz_predykcji, 2, function(x) sum(x & Smarket$Direction=='Down'
 ggplot(data.frame('TPR' = TPR, 'FPR' = FPR, 'p' = progi)) + geom_line(aes(x=FPR, y=TPR)) + geom_abline(slope=1, intercept=0, alpha=0.2) + theme_minimal() 
 ```
   
+  
+Zadanie 5. Do przewidywania wyników giełdy bardzo często stosuje się jeszcze jedną technikę, z którą się już spotkaliśmy: regresję liniową. W tak zwanym modelu autoregresyjnym zakłada się, że wynik danego dnia zależy liniowo od wyników z kilku poprzednich dni.
+
+Przeprowadź regresję liniową zmiennej Today na podstawie zmiennych Lag. Następnie na podstawie tego modelu wykonaj predykcję zmiennej Today. Na jej podstawie utwórz predykcję zmiennej Direction: przyjmij wartość Up tam, gdzie predykcja zmiennej Today jest dodatnia. Oceń takie podejście korzystając z poznanych miar jakości klasyfikatorów. Opcjonalnie, możesz dodać interakcje pomiędzy zmiennymi.
+
+```{r}
+library(ISLR)
+data("Smarket")
+head(Smarket)
+
+m1 <- lm(Today ~ Lag1 + Lag2 + Lag3+ Lag4 + Lag5)
+
+prawdopodobienstwa <- predict(, type = "response")
+
+```

@@ -1,0 +1,120 @@
+
+```{r}
+people <- read.csv("people.tab", header=TRUE, sep="\t")
+attach(people)
+View(people)
+
+```
+
+
+Zadanie1.
+
+1. Wczytaj dane, obejrzyj je i podsumuj w dwóch-trzech zdaniach. Pytania pomocnicze: ile
+jest obserwacji, ile zmiennych ilościowych, a ile jakościowych? Czy są zależności w zmiennych
+objaśniających (policz i podaj VIF)? Czy występują jakieś braki danych?
+```{r}
+
+```
+
+Ile jest obserwacji, ile zmiennych ilościowych, a ile jakościowych? 
+### Zmienne jakościowe:
+married, gender, pet 
+### Zmienne ilościowe:
+* age, weight, height, number_of_kids, expenses
+### Obserwacji:
+500.
+
+```{r}
+length(age) # wydatki miesieczne
+```
+
+2. Podsumuj dane przynajmniej trzema różnymi wykresami. Należy przygotować:
+```{r}
+my_cols <- c("blue", "yellow")  
+pairs(people[, c(1,2,3,6,8)], pch = 19,  cex = 0.5, col = my_cols[iris$Species], lower.panel = NULL)
+```
+
+```{r}
+ boxplot(number_of_kids~pet ,data=people, main="Kids love pets",
+   xlab="Pets", ylab="Numer of kids")
+```
+
+
+
+
+### Zadanie3
+
+Oszacuj model regresji linowej, przyjmując za zmienną zależną (y) wydatki domowe
+(expenses) a zmienne niezależne (x) wybierając spośród pozostałych zmiennych. Rozważ, czykonieczne są transformacje zmiennych lub zmiennej objaśnianej. Podaj RSS, $R^2$ , p-wartości i
+oszacowania współczynników i wybierz właściwe zmienne objaśniające, które najlepiej
+tłumaczą Household_expenses. Sprawdź czy w wybranym przez Ciebie modelu spełnione są
+założenia modelu liniowego i przedstaw na wykresach diagnostycznych: wykresie zależności
+reszt od zmiennej objaśnianej,na wykresie reszt studentyzowanych i na wykresie dźwigni i
+przedyskutuj, czy są spełnione.
+
+
+
+### Zadanie4 
+
+
+```jedną dot. niezależności między dwoma zmiennymi jakościowymi```
+W tym celu wykorzystam Chi-square pearsona.
+```{r}
+## Zbudować tablice kontygnencji
+
+confusion_matrix<- table(people$gender, people$married)
+```
+
+```{r}
+head(confusion_matrix)
+```
+
+```{r}
+chisq <- chisq.test(confusion_matrix)
+```
+
+```{r}
+chisq
+```
+
+
+
+
+```Jedna dot. rozkładu zmiennej (np. "zmienna A ma rozkład wykładniczy z parameterm 10")```
+
+W tym celu przeprowadzę test: Kołomogorowa dla zmiennej ```expences```:
+
+```{r}
+  ks.test(expenses, "pexp", 3)
+```
+
+
+
+
+
+
+Mój pierwszy krok, to zbudowanie modelu z wszystkimi predyktorami, a więc:
+```weight ~ age +  height +  weight + number_of_kids```
+
+
+```{r}
+library(ggplot2)
+model_rl <- lm(expenses ~ age + weight + height + number_of_kids)
+summary(model_rl) 
+```
+
+Następnie chce wybrać tylko istotne predyktory. 
+Widzimy, że wpływ 
+
+
+
+
+
+
+
+
+
+
+
+
+
