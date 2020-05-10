@@ -71,10 +71,13 @@ barplot(counts, main="Married Distribution ",
 
 Dodatkowo: 
 ```{r}
+library(ggplot2)
 ggplot(people) + geom_histogram(aes(x=age), binwidth=5) + theme_minimal()
 ```
 
 ### Zadanie2 
+
+
 ####  Róznica między średnią wartością wybranej zmiennej:
 
 Wykorzystuje test t-Studenta dla populacji o różnych licznościach, ale równych wariancjach (Wykład 2). Zakładamy poziom istotności $\alpha = 0.05$ 
@@ -112,17 +115,15 @@ $$H_0: \text{X i Y są niezależne}$$
 przeciw:
 $$H_1: \text{istnieje jakikolwiek rodzaj zależności między X i Y}$$
 
-Wyliczamy statystykę testu, tzn współcznnik korelacji rang Spearmana oraz testu Pearsona.  
+Wyliczamy statystykę testu Pearsona.  
 ```{r}
-cor(X,Y,method="spearman")
 cor(X,Y,method="pearson")
 ```
 
 ```{r}
-cor.test(X, Y,method="spearman")
 cor.test(X, Y,method="pearson")
 ```
-Nasz współcznnik jest na poziomie 0.8 dla obydwu hipotez, wówczas przyjmujemy hipotezę alternatywną, że nasze dane są zależne. 
+Nasz współcznnik jest na poziomie 0.8., wówczas przyjmujemy hipotezę alternatywną, że nasze dane są zależne. 
 
 
 #### Jedną dot. niezależności między dwoma zmiennymi jakościowymi
@@ -208,9 +209,6 @@ library(ggplot2)
 qqplot_age <- ggplot(people) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
 # Usuwam tylko nie wygodne dane, 
 qqplot_age
-#qqplot_age_elim <- ggplot(eliminated) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku- bez outlierow') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
-#qqplot_age_elim
-#summary(eliminated$age)
 ```
 
 
@@ -250,11 +248,12 @@ height_sd
 ```
 Dla 95 na 100 powtórzeń obliczony przedział będzie zawierał prawdziwą nieznaną wartość średnią dla zmiennej ```height``` 
 
-### Przedział ufności dla warianci 
+### Przedział ufności dla odchylenia standardowego 
+
+na poziomie istotności $\alpha = 0.05$
 ```{r}
 sqrt(height_sd*length(X)/qchisq(c(1-.025,.025), length(X)-1))
 ```
-
 
 
 ### Zadanie5
@@ -329,8 +328,10 @@ Widzmy obserwacje o wysokiej dźwigni 409, 205, 188, ich usunięcie spowoduje du
 par(mfrow=c(1,1))
 plot(step.model, pch=20 ,bg='pink', cex=0.5, which=5)
 ```
+
+
 ```{r}
-plot(resid(people$expenses), resid(step.model), pch=1, bg='blue', cex=1)
+plot(step.model, pch=23, bg='pink', cex=0.7, which= 2)
 ```
 
 Odkrywanie obserwacji dźwigniowych 
@@ -338,12 +339,14 @@ Odkrywanie obserwacji dźwigniowych
 ```{r}
 eruption.res = resid(step.model) 
 ```
+### dodatkowa diagnostyka:
 
 ```{r}
 library(gvlma)
 gvmodel <- gvlma(step.model)
 summary(gvmodel) 
 ```
+Widać, że akceptujemy ```Heteroscedasticity```
 ```{r}
  vif(step.model) # variance inflation factors 
  sqrt(vif(step.model)) > 2 # nie mamy korelacji predyktorów
