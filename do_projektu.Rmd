@@ -67,9 +67,15 @@ cov(Limit, Rating)
 VIF(lm(Age ~ Rating + Limit)) # 1.011385
 VIF(lm(Rating ~ Age + Limit)) # 160.6683
 VIF(lm(Limit ~ Rating + Age)) # 160.5929
+
+librarry
 #pairs(people[, c(1,2,3,6,8)], pch = 19,  cex = 0.5, col = my_cols[], lower.panel = NULL)
 ```
 
+```{r}
+library("car")
+vif(lm(Balance ~ Age + Rating + Limit))
+```
 
 ZADANIE5:
 

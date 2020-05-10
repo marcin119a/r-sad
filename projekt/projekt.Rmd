@@ -31,19 +31,14 @@ Czy są zależności w zmiennych objaśniających (policz i podaj VIF)?
 VIF - czynnik infalcji wairancji
 
 ```{r}
-install.packages("car")
+#install.packages("car")
 
-#library(car)
-#model_rl <- lm(expenses ~ age + weight + height + number_of_kids)
-#vif(model_rl)
-VIF(lm(age ~ weight + height + number_of_kids))
-VIF(lm(weight ~ age + height + number_of_kids))
-VIF(lm(height ~ age + number_of_kids + weight))
-VIF(lm(number_of_kids ~ age + height + weight))
-
+library(car)
+model_rl <- lm(expenses ~ ., data=people)
+vif(model_rl)
 ```
 
-VIF dla każdego z predyktorów ```age, weight, height, number_of_kids``` jest w okolicach 1, wówczas nie mamy przesłanek by twierdzić dużej współliniowości predyktór. 
+VIF dla każdego z predyktorów jest w okolicach 1 lub 2, wówczas nie mamy przesłanek by twierdzić dużej współliniowości predyktór. 
 
 
 Czy występują jakieś braki danych?
@@ -52,6 +47,7 @@ which(is.na(people))
 ```
 To oznacza, że nie mamy braków w danych. 
 
+UWAGA: zmienną ```expenses``` z ujemnymi wagami interpretuje jako przychód
 
 
 2. Podsumuj dane przynajmniej trzema różnymi wykresami. Należy przygotować:
@@ -59,11 +55,11 @@ To oznacza, że nie mamy braków w danych.
 Wykres pokazująćy jak zmienne objaśniające zależa od siebie, oraz jak zmienna objaśniana ```expenses``` zależy od wszystkich
 ```{r}
 my_cols <- c("blue", "yellow")  
-pairs(people[, c(1,2,3,4,5,6,7,8)], pch = 19,  cex = 0.5, col = my_cols[], lower.panel = NULL)
+pairs(people[, c(1,2,3,4,5,6,7,8)], pch = 19,  cex = 0.7, col = my_cols[], lower.panel = NULL)
 ```
 
 ```{r}
- boxplot(number_of_kids~pet ,data=people, main="Kids love pets",
+ boxplot(number_of_kids~pet, data=people, main="Kids love pets",
    xlab="Pets", ylab="Numer of kids")
 ```
 ```{r}
@@ -76,26 +72,30 @@ barplot(counts, main="Married Distribution ",
 ### Zadanie2 
 ####  Róznica między średnią wartością wybranej zmiennej:
 
-Wykorzystuje test t-Studenta dla populacji o różnych licznościach, ale równych wariancjach (Wykład 2). Zakładamy poziom istotności 
+Wykorzystuje test t-Studenta dla populacji o różnych licznościach, ale równych wariancjach (Wykład 2). Zakładamy poziom istotności $\alpha = 0.05$ 
+```{r}
+shapiro.test(people$weight)
+```
+p-wartość > 0.05 daję nam, że dane pochodzą z rozkładu normalnego.  
 
-Zakładamy, że średnia zarobków dla kobiet jest równa średniej zarobków dla mężczyzn:
+Zakładamy, że średnia zarobków $\mu_1$ dla kobiet jest równa średniej zarobków dla mężczyzn $\mu_2$:
 $$H_0: \mu_1 = \mu_2$$
 Przeciwko hipotezie alternatwynej: że jest różna
 $$H_1: \mu_1 \neq \mu_2$$
 
 
 ```{r}
-x = people$weight[people$gender == "man"]
-y = people$weight[people$gender == "woman"]
+x = people$weight[people$gender == "man"] # filtruje dane
+y = people$weight[people$gender == "woman"] #
 
-t.test(x, y, var.equal = TRUE)
+t.test(x, y, var.equal = TRUE) # wykonuje test
 ```
 Decyzja:
-Wybieram hipotezę alternatywną, że różnica w średnich nie jest równa 0, tzn średnie są różne. 
+p-wartość = $0.1516 > \alpha = 0.05$, wówczas: wybieram hipotezę alternatywną, że różnica w średnich nie jest równa 0, tzn średnie są różne. 
 
 
 #### Niezależności między dwoma zmiennymi ilościowymi:
-Test Spearmana:
+##### Test Spearmana:
 Dana jest próba losowa postaci $(X_1, Y_1), \ldots (X_n,Y_n)$, gdzie X to ```expenses``` a Y to ```age``` 
 
 ```{r}
@@ -107,7 +107,7 @@ $$H_0: \text{X i Y są niezależne}$$
 przeciw:
 $$H_1: \text{istnieje jakikolwiek rodzaj zależności między X i Y}$$
 
-Wyliczamy statystykę testu, tzn współcznnik korelacji rang Spearmana. 
+Wyliczamy statystykę testu, tzn współcznnik korelacji rang Spearmana oraz testu Pearsona.  
 ```{r}
 cor(X,Y,method="spearman")
 cor(X,Y,method="pearson")
@@ -130,7 +130,7 @@ $$
 $$
 Wynkonuje test na poziomie istotności $\alpha = 0.05$
 
-Buduję macierz kontygnencji ## Zbudować tablice kontygnencji:
+Buduję macierz kontygnencji:
 
 ```{r}
   confusion_matrix<- table(people$gender, people$married)
@@ -155,7 +155,7 @@ chisq
 
 W tym celu przeprowadzę test: Kołomogorowa dla zmiennej ```expences```:
 
-I wprowadzam hipotezę, na poziomie istotności $\alpha = 0.05"
+I wprowadzam hipotezę, na poziomie istotności $\alpha = 0.05$
 $$H_0: \text{zmienna A ma rozkład wykładniczy z parametrem 10}$$
 przeciw:
 $$H_1 \text{ zmienna A nie ma rozkładu wykładniczego z parametrem 10}$$
@@ -164,65 +164,93 @@ $$H_1 \text{ zmienna A nie ma rozkładu wykładniczego z parametrem 10}$$
   ks.test(expenses, "pexp", 3)
 ```
 Statystyka testowa $D = 0.802$, wówczas nasza p-wartość jest mniejsza niż poziom istotności. 
+Uważam, że nie ma znaczącej różnicy między rozkładami, nie ma podstaw do odrzucenia hipotezy $H_0$.
 
 
+### Zadanie3
 3.Podaj przedziały ufności dla wartości średniej i wariancji dla zmiennych wiek i wzrost.
 Jeżeli w celu wyliczenia przedziału ufności musisz poczynić jakieś założenia(np.założyć że zmienna pochodzi z rozkładu normalnego), zaznacz to i skomentuj czy wydaje Ci się to w danym przypadku uprawnione.
 Opisz wszelkie dodatkowe operacje, jakie zostały wykonane przed testem(takie jak usunięcie obserwacji odstających).
 Przedyskutuj, dla której ze zmiennych oczekujesz prawidłowych wyników. 
 
 
+W celu sprawdzenia normalności danych wykonuje test Test Shapiro-Wilka:
+$$
+     H_0 : \text{Wzrost pochodzi z populacji o rozkładzie normalnym}
+$$
+przeciw alternatywnej: 
+$$
+    H_1: \text{Wzrost nie pochodzi z populacji o rozkładzie normalnym}
+$$
 
+```{r}
+shapiro.test(people$height)
+```
+$\texttt{p-wartość} > 0.05$
+wówczas rozkład naszych danych nie znacząco różni się od rozkładu normalego. Więc dane pochodzą właśnie z takiego rozkładu. 
+
+I analogicznie dla zmiennej ```age```
+
+```{r}
+shapiro.test(people$age)
+```
+Widzmy, że zmienna dla zmiennej ```age``` $p < \alpha$ wówczas odrzucamy hipotezę zerowa. 
+
+Pokazuje to również wykres kwantylowy
 ```{r}
 library(ggplot2)
 
 qqplot_age <- ggplot(people) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
+# Usuwam tylko nie wygodne dane, 
 qqplot_age
-
-qqplot_age_elim <- ggplot(eliminated) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku- bez outlierow') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
-qqplot_age_elim
-summary(eliminated$age)
+#qqplot_age_elim <- ggplot(eliminated) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku- bez outlierow') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
+#qqplot_age_elim
+#summary(eliminated$age)
 ```
 
-Wykorzystujać metodę IQR(https://en.wikipedia.org/wiki/Interquartile_range) dla outlier detextion, usuwam outliery dla ```age```:
+
+
+Postanowiłem usnąc tylko obserwacje, które nie są naturalne dla zmiennej ```height```. ***Stosując metodę 1.5 IQR, usunąłbym za dużo znaczących zmiennych. ***
 
 ```{r}
 library(ggplot2)
 qqplot_height <- ggplot(people) + stat_qq(aes(sample=height)) + stat_qq_line(aes(sample=height)) + theme_minimal() + ggtitle('Wykres kwantylowy wysokości') + xlab('Theretical Quantiles') + ylab('Sample Quantiles')
 qqplot_height
+# Usuwam wysokości odstające mocno(mogą sugerować błędne dane)
+people <- people[-c(241, 356, 419, 458, 194, 51, 64, 161, 364, 413, 256, 207, 39, 199, 215, 362, 247, 467), ]
 
-Q <- quantile(people$height, probs=c(.25, .75), na.rm = FALSE)
-iqr <- 1.5 * IQR(people$height)
-eliminated <- subset(people, people$height > (Q[1] - iqr) & people$height < (Q[2]+iqr))
-qqplot_age <- ggplot(eliminated) + stat_qq(aes(sample=height)) + stat_qq_line(aes(sample=height)) + theme_minimal() + ggtitle('Wykres kwantylowy wysokości bez odstających') + xlab('Theretical Quantiles') + ylab('Sample Quantiles')
+qqplot_age <- ggplot(people) + stat_qq(aes(sample=height)) + stat_qq_line(aes(sample=height)) + theme_minimal() + ggtitle('Wykres kwantylowy wysokości bez odstających') + xlab('Theretical Quantiles') + ylab('Sample Quantiles')
 qqplot_age
-summary(eliminated$height)
+summary(people$height)
 ```
-
-Wykorzystujać metodę IQR dla outlier detextion, usuwam outliery dla ```height```:
-Usunęcie poprawia rozkład i smiało mogę założyć że dane ```height``` pochodzą z rozkładu normalnego. 
-
 
 Widzimy z wykresów kwantowlowych wysokości, że założenie o rozkładu próbki jako rozkładu normalności jest spełnione. 
 
 
-Przy założeniu, że zmienna ```age``` ma rozkład normalny, ustalam próg ufności $\alpha = 0.05$
+Przy założeniu, że zmienna ```height``` ma rozkład normalny, ustalam próg ufności $\alpha = 0.05$.
+### Przedział ufności dla średniej
 ```{r}
 alpha <- 0.05
+X = people$height
 n <- nrow(people)
 q <- qt(1-alpha/2, n-1)
-age_mean = mean(people$age)
-age_sd = sd(people$age)
-student.interval <- c(age_mean - q*age_sd/sqrt(n-1), age_mean + q*age_sd/sqrt(n-1))
+height_mean = mean(X)
+height_sd = sd(X)
+student.interval <- c(height_mean - q*height_sd/sqrt(n-1), height_mean + q*height_sd/sqrt(n-1))
 print(student.interval)
-# Jeśli założenie o normalności jest prawdziwe, to dla 95 powtórzeń na 100 przedział obliczony powyższym wzorem 
-# będzie zawierał prawdziwą (nieznaną) wartość średnią szerokości działki kielicha.
-# Jedno powtórzenie dotyczy tu zebrania i zmierzenia 50 okazów Iris versicolor.
-# Im mniej założenie o normalności jest spełnione, czyli im bardziej prawdziwy rozkład szerokości działki kielicha
-# różni się od normalnego, tym mniej dokładny będzie nasz wynik. 
-# Nie wiemy natomiast, czy wówczas tak obliczony przedział będzie zawierał prawdziwą wartość średnią 
-# rzadziej, czy częściej niż 95 razy na 100. 
 ```
+Dla 95 na 100 powtórzeń obliczony przedział będzie zawierał prawdziwą nieznaną wartość średnią dla zmiennej ```height``` 
+
+
+```{r}
+library(MASS)
+confint.var(people$height)
+```
+
+### Przedział ufności dla warianci
+
+
+
 
 ### Zadanie5
 
@@ -260,26 +288,79 @@ summary_model <- summary(model_rl)
 Następnie chce wybrać tylko istotne predyktory. 
 Widzimy, że wpływ 
 
+Sprawdzenie, czy w moim modelu są spełnione założenia modelu linowego. 
 
 
-Z wykładu: 
+Z wykładu wykorzystuje podstawowe techniki wyszukiwania
 ```{r}
 library(MASS)
 # Fit the full model 
 full.model <- lm(expenses ~., data = people)
 summary(full.model)
+
+```
+
+
+
+```{r}
 # Stepwise regression model
 step.model <- stepAIC(full.model, direction = "both", 
-                      trace = FALSE)
-summary(step.model)
+                      trace = FALSE, x = TRUE)
+summary_step = summary(step.model)
 ```
 
 Resztowa suma kwadratów
 
 ```{r}
 RSS <- sum(resid(step.model)^2)
-r2 <- step.model$r.squared
+RSS
+r2 <- summary_step$r.squared
 r2
+p.value <- summary_step$p.value
+p.value
+```
+```{r}
+
+alfa <- 0.05 #poziom istnoności
+s <- rstudent(step.model)
+z <- as.matrix(s)
+sk <- qt(1- alfa/2, nrow(step.model$x) - ncol(step.model$x)- 2)
+
+w <- (abs(z[,1]) > sk)
+wyn <- as.matrix(w)
+head(wyn)
+wyn_k <- data.frame(z, wyn)
+plot(z, xlab="numer obserwacji", ylab="reszt stundetyzowane")
+abline(h = c(sk,-sk), lty=2)
+```
+
+```{r}
+par(mfrow=c(1,1))
+plot(step.model, pch=23 ,bg='pink',cex=2, which=5)
 ```
 
 
+
+
+Wykres wartości resztowych: 
+```{r}
+par(mfrow=c(1,1))
+plot(step.model, pch=23 ,bg='pink', cex=0.7, which= 1)
+```
+widzimy, że linowość jest naruszown. Wydaje się, że jest to relacja kwadratowa. 
+
+
+Wykres dźwigni: widzmy obserwacje o wyskoniej dźwigni 409, 205, 188, ich usunięcie spowoduje duże zmiany w przebiegu prostej regresji:
+```{r}
+par(mfrow=c(1,1))
+plot(step.model, pch=20 ,bg='pink', cex=0.5, which=5)
+```
+```{r}
+plot(resid(people$expenses), resid(step.model), pch=1, bg='blue', cex=1)
+```
+
+Odkrywanie obserwacji dźwigniowych 
+
+```{r}
+eruption.res = resid(step.model) 
+```
