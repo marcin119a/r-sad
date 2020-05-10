@@ -106,4 +106,28 @@ summary(quadratic.model)
 Ocena dokładności modelu- odchylenie standardowe składnika resztowego:
 
 
+```{r}
+library(car)
+fit <- lm(mpg~disp+hp+wt+drat, data=mtcars) 
+```
 
+```{r}
+outlierTest(fit) # Bonferonni p-value for most extreme obs
+qqPlot(fit, main="QQ Plot") #qq plot for studentized resid
+leveragePlots(fit) # leverage plots 
+```
+
+
+```{r}
+data("mtcars")
+
+
+#średnia z próby
+mu<-mean(mtcars$mpg)
+#odchylenie standardowe
+sigma<-sd(mtcars$mpg)
+length(mtcars$mpg)
+```
+```{r}
+round(sqrt(sigma*length(mtcars$mpg)/qchisq(c(1-.025,.025), length(mtcars$mpg-1))),2)
+```

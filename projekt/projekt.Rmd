@@ -22,13 +22,13 @@ married, gender, pet
 ```{r}
 length(people$age) # obserwacja ilość
 ```
-### Zmienne objasnaijace: 
+### Zmienne objaśniająće: 
 
 
 
 Czy są zależności w zmiennych objaśniających (policz i podaj VIF)? 
 
-VIF - czynnik infalcji wairancji
+VIF - czynnik infalcji wariancji
 
 ```{r}
 #install.packages("car")
@@ -68,6 +68,11 @@ barplot(counts, main="Married Distribution ",
    xlab="Number of pet", legend = rownames(counts),  beside=TRUE)
 ```
 
+
+Dodatkowo: 
+```{r}
+ggplot(people) + geom_histogram(aes(x=age), binwidth=5) + theme_minimal()
+```
 
 ### Zadanie2 
 ####  Róznica między średnią wartością wybranej zmiennej:
@@ -147,7 +152,7 @@ chisq <- chisq.test(confusion_matrix)
 ```{r}
 chisq
 ```
-
+ $p-value > \alpha$, więc nie ma zależności pomiędzy grupami.
 
 
 
@@ -161,7 +166,7 @@ przeciw:
 $$H_1 \text{ zmienna A nie ma rozkładu wykładniczego z parametrem 10}$$
 
 ```{r}
-  ks.test(expenses, "pexp", 3)
+  ks.test(height, "pexp", 3)
 ```
 Statystyka testowa $D = 0.802$, wówczas nasza p-wartość jest mniejsza niż poziom istotności. 
 Uważam, że nie ma znaczącej różnicy między rozkładami, nie ma podstaw do odrzucenia hipotezy $H_0$.
@@ -239,16 +244,16 @@ height_sd = sd(X)
 student.interval <- c(height_mean - q*height_sd/sqrt(n-1), height_mean + q*height_sd/sqrt(n-1))
 print(student.interval)
 ```
+```{r}
+height_mean
+height_sd
+```
 Dla 95 na 100 powtórzeń obliczony przedział będzie zawierał prawdziwą nieznaną wartość średnią dla zmiennej ```height``` 
 
-
+### Przedział ufności dla warianci 
 ```{r}
-library(MASS)
-confint.var(people$height)
+sqrt(height_sd*length(X)/qchisq(c(1-.025,.025), length(X)-1))
 ```
-
-### Przedział ufności dla warianci
-
 
 
 
@@ -257,38 +262,13 @@ confint.var(people$height)
 Oszacuj model regresji linowej, przyjmując za zmienną zależną (y) wydatki domowe (expenses) a zmienne niezależne (x) wybierając spośród pozostałych zmiennych. Rozważ, czy konieczne są transformacje zmiennych lub zmiennej objaśnianej.
 
 Podaj RSS, $R^2$ , p-wartości i oszacowania współczynników i wybierz właściwe zmienne objaśniające, które najlepiej tłumaczą ```expenses```. Sprawdź czy w wybranym przez Ciebie modelu spełnione są założenia modelu liniowego i przedstaw na wykresach diagnostycznych: wykresie zależności reszt od zmiennej objaśnianej,na wykresie reszt studentyzowanych i na wykresie dźwigni i przedyskutuj, czy są spełnione.
-    
-```{r}
-library(ggplot2)
-ggplot(people, aes(x=age, y=expenses)) + geom_point() + theme_minimal()
-```
-```{r}
-library(ggplot2)
-ggplot(people, aes(x=height, y=expenses)) + geom_point() + theme_minimal()
-```
-```{r}
-library(ggplot2)
-ggplot(people, aes(x=number_of_kids, y=expenses)) + geom_point() + theme_minimal()
-```
-```{r}
-library(ggplot2)
-ggplot(people, aes(x=weight, y=expenses)) + geom_point() + theme_minimal()
-```
 
 Mój pierwszy krok, to zbudowanie modelu z wszystkimi predyktorami, a więc:
-```expenses ~ age +  height +  weight + number_of_kids```
+```expenses ~ .```
 
-
-```{r}
-library(ggplot2)
-model_rl <- lm(expenses ~ age + weight + height + number_of_kids)
-summary_model <- summary(model_rl) 
-```
 
 Następnie chce wybrać tylko istotne predyktory. 
-Widzimy, że wpływ 
 
-Sprawdzenie, czy w moim modelu są spełnione założenia modelu linowego. 
 
 
 Z wykładu wykorzystuje podstawowe techniki wyszukiwania
@@ -296,18 +276,25 @@ Z wykładu wykorzystuje podstawowe techniki wyszukiwania
 library(MASS)
 # Fit the full model 
 full.model <- lm(expenses ~., data = people)
-summary(full.model)
-
+summ_full <- summary(full.model)
+summ_full
+```
+```{r}
+RSS <- sum(resid(full.model)^2)
+RSS
+r2 <- summ_full$r.squared
+r2
 ```
 
-
-
+### Stepwise regression model- podejście z wykładu
 ```{r}
 # Stepwise regression model
 step.model <- stepAIC(full.model, direction = "both", 
                       trace = FALSE, x = TRUE)
 summary_step = summary(step.model)
 ```
+
+#### Sprawdzenie, czy w moim modelu są spełnione założenia modelu linowego. 
 
 Resztowa suma kwadratów
 
@@ -316,41 +303,28 @@ RSS <- sum(resid(step.model)^2)
 RSS
 r2 <- summary_step$r.squared
 r2
-p.value <- summary_step$p.value
-p.value
 ```
-```{r}
+P-wartość: 
+p-value: < 2.2e-16
 
-alfa <- 0.05 #poziom istnoności
-s <- rstudent(step.model)
-z <- as.matrix(s)
-sk <- qt(1- alfa/2, nrow(step.model$x) - ncol(step.model$x)- 2)
 
-w <- (abs(z[,1]) > sk)
-wyn <- as.matrix(w)
-head(wyn)
-wyn_k <- data.frame(z, wyn)
-plot(z, xlab="numer obserwacji", ylab="reszt stundetyzowane")
-abline(h = c(sk,-sk), lty=2)
-```
 
+
+
+#### Wykres wartości resztowych: 
 ```{r}
 par(mfrow=c(1,1))
-plot(step.model, pch=23 ,bg='pink',cex=2, which=5)
+plot(step.model, pch=23, bg='pink', cex=0.7, which= 1)
 ```
+widzimy, że linowość jest naruszona Wydaje się, że jest to relacja kwadratowa. 
+Nie zauważamy wykresy "lejka", który sugeruję zmienność wariancji. Można przyjać założenie modelu, że każdy błąd ma tą samą wariancje.
+
+Na wykresie widzimy również oberwacje odstające: ```262```, ```188```, ```409```. Usunięcie takich danych zmieni miarę jakości dopasowania. 
 
 
+#### Wykres dźwigni: 
 
-
-Wykres wartości resztowych: 
-```{r}
-par(mfrow=c(1,1))
-plot(step.model, pch=23 ,bg='pink', cex=0.7, which= 1)
-```
-widzimy, że linowość jest naruszown. Wydaje się, że jest to relacja kwadratowa. 
-
-
-Wykres dźwigni: widzmy obserwacje o wyskoniej dźwigni 409, 205, 188, ich usunięcie spowoduje duże zmiany w przebiegu prostej regresji:
+Widzmy obserwacje o wysokiej dźwigni 409, 205, 188, ich usunięcie spowoduje duże zmiany w przebiegu prostej regresji:
 ```{r}
 par(mfrow=c(1,1))
 plot(step.model, pch=20 ,bg='pink', cex=0.5, which=5)
@@ -364,3 +338,14 @@ Odkrywanie obserwacji dźwigniowych
 ```{r}
 eruption.res = resid(step.model) 
 ```
+
+```{r}
+library(gvlma)
+gvmodel <- gvlma(step.model)
+summary(gvmodel) 
+```
+```{r}
+ vif(step.model) # variance inflation factors 
+ sqrt(vif(step.model)) > 2 # nie mamy korelacji predyktorów
+```
+
