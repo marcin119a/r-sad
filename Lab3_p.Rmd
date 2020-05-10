@@ -1,0 +1,274 @@
+---
+title: "Lab3 - Wczytywanie danych. Przedziały ufności"
+author: "Michał Ciach"
+date: "February 26, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Na poprzednich zajęciach ćwiczyliśmy na danych symulowanych lub wstępnie przygotowanych do pracy w Rstudio.
+Na dzisiejszych zajęciach wykorzystamy poznane dotychczas techniki do analizy prawdziwych zbiorów danych.
+
+### Co to są dane?
+
+Rachunek prawdopodobieństwa zajmuje się badaniem własności *zmiennych losowych*, czyli takich zmiennych, które przyjmują różne wartości z określonym prawdopodobieństwem. Formalnie rzecz biorąc, są to funkcje przypisujące zdarzeniom elementarnym liczby rzeczywiste. Taka definicja zmiennej $X$ pozwala nam ściśle wyrazić co oznaczają napisy postaci $\mathbb{P}(X = 1)$. 
+
+Rachunek prawdopodobieństwa pozwala nam określić jakich wyników możemy się spodziewać, jeśli będziemy obserwować jakieś losowe zjawisko, na przykład rzut kostką. 
+Musimy jednak w tym celu określić prawa rządzące obserwowanym zjawiskiem, czyli rozkład prawdopodobieństwa obserwowanej zmiennej losowej.
+To, jakie jest prawdopodobieństwo przyjęcia określonych wartości, nazywamy *rozkładem prawdopodobieństwa* zmiennej losowej.
+
+W statystyce modelujemy zjawiska losowe również za pomocą zmiennych losowych, ale interesuje nas dokładnie odwrotne pytanie: mając zbiór obserwacji, co możemy wywnioskować na temat praw rządzących obserwowanym zjawiskiem? Formalnie rzecz biorąc, o ile w rachunku prawdopodobieństwa mamy do czynienia z ciągiem zmiennych losowych $X_1, X_2, \dots, X_n$, to w statystyce mamy do czynienia z ciągiem *realizacji* tych zmiennych, czyli ich wartości przyjętych dla pewnego zdarzenia elementarnego $\omega$: $X_1 (\omega), X_2 (\omega), \dots, X_n (\omega)$.  
+
+Wszystkie dane, z jakimi mamy do czynienia, traktujemy jako realizacje ciągu niezależnych zmiennych losowych, a interesuje nas, co możemy powiedzieć o (nieznanym) rozkładzie prawdopodobieństwa tych zmiennych. Zdarzenie elementarne $\omega$ interpretujemy jako przeprowadzony eksperyment losowy.
+
+Na przykład, załóżmy że obserwujemy serię rzutów kostką. Przed $i$-tym rzuceniem kostki interpretujemy wynik jako zmienną losowa $X_i$ - nie wiemy, jaka liczba oczek wypadnie, możemy jedynie podać prawdopodobieństwo wyrzucenia danej liczby. Rzucenie kostką jest równoznaczne z ustaleniem zdarzenia elementarnego. Wówczas $X_i$ zamienia się w $X_i (\omega)$ - zaobserwowaną liczbę oczek. Możemy wówczas odpowiadać na pytania dotyczące rozkładu prawdopodobieństwa zmiennej $X_i$, na przykład wyestymować prawdopodobieństwo wyrzucenia szóstki na tej kostce i sprawdzić, czy rzeczywiście jest równe $1/6$. 
+
+W statystyce na ogół nie rozpatrujemy wszystkich możliwych rozkładów. Zamiast tego interesują nas tzw. *rodziny parametryczne*, czyli takie zbiory rozkładów, które są opisane przez kilka ustalonych parametrów. Na przykład, rodzina jednowymiarowych rozkładów normalnych jest w pełni opisana przez dwa parametry: średnią oraz wariancję. Dzięki temu żeby odpowiedzieć na pytanie, jaki rozkład ma badana zmienna losowa, wystarczy wyestymować te parametry, tak jak to robiliśmy na poprzednich zajęciach. 
+
+## Wczytywanie danych
+
+Jako pierwsze ćwiczenie wczytamy dane z pliku `Zadluzenie gmin.csv` dostępnego na stronie przedmiotu.  
+Plik zawiera dane dotyczące procentowego zadłużenia (w stosunku do dochodów) gmin w Polsce w roku 2015.  
+Rstudio umożliwia dwa sposoby wczytywania danych.  
+
+**Sposób 1.**
+Do wczytania pojedynczego pliku najlepiej skorzystać z wbudowanego narzędzia, dostępnego w zakładce *Environment -> Import Dataset -> From Text (base)...* (konkretne wyrażenia mogą różnić się w zależności od wersji Rstudio):
+
+![*Narzędzie Import Dataset*](import_dataset.png)
+
+Po uruchomieniu narzędzia wyświetli się okno pozwalające wybrać plik do wczytania.
+Po wybraniu pliku wyświetli się okno zawierające m.in. podgląd pliku, podgląd ramki danych jaką utworzy Rstudio, oraz dodatkowe opcje takie jak wybór separatora kolumn:
+
+![*Opcje importowania pliku*](ladowanie_danych.png)
+
+Kliknięcie na przycisk *Import* utworzy nową zmienną typu *data frame* o nazwie `Zadluzenie.gmin`.   
+Nazwę zmiennej możemy zmienić w polu *Name* w lewym górnym rogu okna importowania danych.  
+
+Podgląd tabeli wyświetli się w nowej zakładce w oknie skryptów.  
+Z kolei w zakładce *History* obok zakładki *Environment* pojawi się kod, którym R wczytał dane.  
+Możemy łatwo przekopiować go do skryptu lub notatnika markdown, zaznaczając odpowiednią linijkę w zakładce *History* i klikając przycisk *To Source*.  
+
+![*Okno historii komend*](historia_komend.png)
+
+**Sposób 2.** 
+W przypadku większej liczby zbiorów danych używanie wbudowanego narzędzia jest niewydajne.  
+Dużo lepszym pomysłem jest wówczas skorzystanie z jednej z funkcji służących do wczytywania danych: `read.table`, `read.delim` lub `read.csv`. Pierwsza służy do wczytywania dowolnych tabel, druga - tabel, w których separatorem jest tabulator, trzecia - tabel, w których separatorem jest przecinek. Różne są też opcje domyślne: `read.csv` oraz `read.delim` domyślnie zakładają, że w danych znajduje się nagłówek zawierający nazwy kolumn, a `read.table` nie.  
+
+W dalszej części zajęć możecie sami wybrać, z którego sposobu wczytywania danych będziecie korzystać.
+
+## Wizualizacja i analiza danych
+
+**Zadanie 1.** Wczytaj dane z pliku `Zadluzenie gmin.csv` i sprawdź, co zawierają poszczególne kolumny.  
+Za pomocą funkcji `summary` sprawdź podstawowe statystyki tych danych.
+Jaka jest mediana zadłużenia? Jaka jest najwyższa wartość zadłużenia wśród 75% najmniej zadłużonych gmin? A jakie jest najwyższe zadłużenie?
+
+```{r, include=F}
+Zadluzenie.gmin <- read.delim("Zadluzenie gmin.csv")
+```
+
+```{r}
+summary(Zadluzenie.gmin$Zadłużenie.gmin)
+```
+
+Oblicz średnią i odchylenie standardowe zadłużenia. Na tej podstawie odpowiedz, w przybliżeniu, o ile punktów procentowych zadłużenie średnio rzecz biorąc odchyla się od średniej?   
+
+```{r, include=F}
+mean(Zadluzenie.gmin$Zadłużenie.gmin)
+sd(Zadluzenie.gmin$Zadłużenie.gmin)
+# Odchylenie standardowe = 19, co przyjmujemy za przybliżenie średniego odchylenia od średniej.
+```
+
+Przedstaw zadłużenie gmin na histogramie, korzystając z biblioteki `ggplot2` (pamiętaj o wczytaniu biblioteki komendą `library`).  Czy zadłużenie gminy Ostrowice wygląda na typowe dla polskiej gminy? Może należy uznać tę gminę za *obserwację odstającą* i usunąć z analizy? Wiersze lub kolumny możemy usuwać za pomocą indeksowania ujemnego. Na przykład, `Zadluzenie.gmin[-10, ]` zwróci tabelę `Zadluzenie.gmin` bez dziesiątego wiersza. 
+
+```{r, include=F}
+# Przykładowy opis co to są obserwacje odstające (outliery):
+
+# Analizując tego typu dane, zakładamy ze istnieje jakies zjawisko kontrolujace srednie zadluzenie, 
+# np polityka krajowa, ale ze tez sa zjawiska ktore je zaburzaja, np polityka lokalna.
+# Chcemy ocenic ile wynosi srednie zadluzenie oraz jaka jest jego zmienność, żeby np. ocenić wpływ samorządów na zadłuzenie,
+# albo żeby ocenić wzrost zadłużenia w stosunku do poprzednich lat.
+
+# Matematycznie outlier to obserwacja ktora pochodzi z innego rozkladu niz ten który badamy,
+# czyli jest kontrolowana przez inne "prawa natury" niz pozostale zmienne, i zaburza nasze statystyki.
+# Uznanie obserwacji za odstającą zależy m.in. od tego, na czym nam zalezy w naszej analizie.
+# Jesli na analizie wplywu polityki lokalnej i krajowej na zadluzenie, to wtedy na przyklad
+# nie interesuje nas gmina w ktora walnela asteroida, bo to nam nie mówi nic na temat zjawiska które badamy. 
+# Wówczas mozemy taką obserwację usunac. 
+# Na ogol powinno sie poszukac poza-matematycznego uzasadnienia czemu cos jest outlierem.
+# Zawsze jest to decyzja subiektywna.
+
+# Można studentom kazać poszukac w internecie przyczyn zadluzenia Ostrowic i uzasadnic, czy mozemy je uznac za outlier.
+# Jest to dosyć dobrze opisane na Wikipedii w artykule o tej gminie.
+library(ggplot2)
+ggplot(Zadluzenie.gmin) + geom_histogram(aes(x=Zadłużenie.gmin), binwidth=5) + theme_minimal()
+```
+
+```{r, include=F}
+# Ja na podstawie histogramu usuwam z danych Ostrowice i Rewal. 
+Zadluzenie.gmin <- Zadluzenie.gmin[-c(2478, 2477), ]
+```
+
+```{r, include=F}
+ggplot(Zadluzenie.gmin) + geom_histogram(aes(x=Zadłużenie.gmin), binwidth=5) + theme_minimal()
+```
+
+**Zadanie 2.** Po podjęciu decyzji o odrzuceniu (lub nie) ewentualnych obserwacji odstających, zwizualizuj zadłużenie ponownie na histogramie.
+Za pomocą wykresu kwantylowego oceń, czy i jak rozkład zadłużenia odbiega od rozkładu normalnego.
+Wykres kwantylowy porównujący dane ze standardowym rozkładem normalnym utworzysz korzystając z warstwy `stat_qq` z pakietu `ggplot2`.  
+Ta warstwa przyjmuje jedną estetykę o nazwie `sample`, równą nazwie kolumny z której ma utworzyć QQplot.
+
+Do wykresu kwantylowego warto dodać prostą obrazującą ogólny trend w wykresie.  
+Można w tym celu wykorzystać warstwę `stat_qq_line` o tych samych estetykach.  
+Ta warstwa przeprowadzi prostą przez punkty odpowiadające kwantylom o wartości 0.25 i 0.75.  
+Więcej o wykresach kwantylowych i jak je interpretować przeczytasz [tutaj](https://data.library.virginia.edu/understanding-q-q-plots/). 
+
+```{r}
+# To jest fajne zadanie, bo początkowy wynik jest bardzo mylący.
+# Na początku studentom należy wyjaśnić, co to jest QQplot i jak się to czyta.
+qqplot_zadluzenia <- ggplot(Zadluzenie.gmin) + stat_qq(aes(sample=Zadłużenie.gmin)) + stat_qq_line(aes(sample=Zadłużenie.gmin)) + theme_minimal() + ggtitle('Wykres kwantylowy zadłużenia gmin') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
+qqplot_zadluzenia
+
+# Z wykresu zamieszczonego poniżej możemy odczytać, że w pewnym przedziale rozkład jest bardzo bliski normalnego,
+# poniewaz punkty układają się na linii prostej.
+# Główne różnice to dużo gmin z zerowym zadłużeniem (wykres wypłaszcza się po lewej stronie) i lekko cięższy ogon, czyli kilka 
+# gmin z bardzo wysokim zadłużeniem (wykres zakrzywia się w górę po prawej stronie).
+
+# Jest to natomiast fałszywy wniosek! Silne wypłaszczenia sprawiają, że nie widać mniej wyraźnych odstępstw.
+# Przed stwierdzeniem, że rozkład jest normalny, należy przyjrzeć się bliżej temu wypłaszczeniu.
+```
+
+Końcowy wynik może wyglądać na przykład w ten sposób:
+```{r}
+qqplot_zadluzenia
+```
+
+```{r}
+# Poniżej wybierzemy te gminy, które mają niezerowe zadłużenie. Ponadto odrzucimy te, które powodują silne zakrzywienie
+# wykresu po prawej stronie, czyli te o wysokim zadłużeniu (powiedzmy, powyżej 60%, bo tam się zaczyna zakrzywienie).
+# Dopiero teraz widać odstępstwa od normalności w zadłużeniu "typowych gmin".
+# Z poniższego wykresu (którego nie daję do wyrenderowanego skryptu) wnioskujemy, że w porównaniu do rozkładu
+# normalnego rozkład zadłużenia typowej gminy ma lekkie ogony, czyli jest bardziej skupiony
+# wokół średniej niż jest to możliwe w przypadku rozkładów normalnych (co objawia się wypłaszczeniem wykresu po lewej stronie).
+# Jeśli zrobimy przybliżenie na iny zakres (np. wybierając wiersze 63:2466) to zobaczymy jeszcze inne odstępstwa.
+# Widzimy wówczas wzgórek po prawej stronie, który sugeruje dwumodalność.
+podzbior1 <- 63:2378
+podzbior2 <- 63:2466  # tutaj sugeruje dwumodalność
+podzbior3 <- 400:1800 # inny przyklad
+typowe_gminy <- Zadluzenie.gmin[podzbior1, ]
+x <- ggplot(typowe_gminy) + stat_qq(aes(sample=Zadłużenie.gmin)) + stat_qq_line(aes(sample=Zadłużenie.gmin)) +
+  theme_minimal() + ggtitle('Wykres kwantylowy zadłużenia gmin') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
+x
+```
+
+## Przedziały ufności
+
+Zazwyczaj dane reprezentują podzbiór jakiejś populacji.
+Przedział ufności pozwala nam ocenić jakie wartości może przyjmować badany parametr w rzeczywistości, jeśli estymujemy go na podstawie danych.  
+W praktyce najczęściej oblicza się przedziały ufności dla średniej lub wariancji, przyjmując założenie, że dane pochdzą z rozkładu normalnego.
+
+**Zadanie 3.** Wczytaj dane `iris` i wybierz wiersze odpowiadające gatunkowi *versicolor*. Korzystając z wykresu kwantylowego sprawdź, czy zmienna `Sepal.Width` (mierząca szerokość działki kielicha) ma rozkład normalny. 
+
+
+```{r, include=F}
+data(iris)
+versi <- iris[iris$Species == 'versicolor', ]
+ggplot(versi) + stat_qq(aes(sample=Sepal.Width)) + stat_qq_line(aes(sample=Sepal.Width))
+# Wykres nie daje nam podstaw, żebyśmy uznali że musimy odrzucić hipotezę o normalności zmiennej.
+# Ewentualne odchylenia wyglądają na spowodowane tym, że mamy stosunkowo mało danych.
+# Wobec tego przyjmiemy że zmienna jest normalna. 
+# Przy dalszych analizach trzeba mieć świadomość, że jest to jedynie założenie, i nasze wyniki będą na tyle dobrym 
+# przybliżeniem rzeczywistości, na ile to założenie jest prawdziwe.
+```
+
+Przy założeniu, że szerokość działki kielicha ma rozkład normalny, oblicz przedział ufności dla średniej wartości tej zmiennej na poziomie $\alpha = 0.95$. W tym celu wykorzystaj wzór na tzw. *studentyzowany przedział ufności*:
+$$\left(\bar{X} - \frac{t(1-\alpha/2, n-1)}{\sqrt{n}}\hat{S}, \bar{X} + \frac{t(1-\alpha/2, n-1)}{\sqrt{n}}\hat{S}\right),$$ 
+gdzie $\bar{X}$ to średnia, $\hat{S}$ to pierwiastek z *nieobciążonego* estymatora wariancji (czyli wynik funkcji `sd()`), a $t(1-\alpha/2, n-1)$ to kwantyl na poziomie $1-\alpha/2$ dla rozkładu t Studenta o $n-1$ stopniach swobody (możesz go obliczyć korzystając z funkcji `qt()`).  
+
+Co możemy powiedzieć o średniej szerokości działki kielicha gatunku *Iris versicolor* na podstawie naszych danych, przy założeniu, że zmienna ta ma rozkład normalny? Co się stanie, jeśli okaże się, że to założenie nie jest spełnione?
+
+```{r}
+#  versi <- versi[1:10, ] # opcjonalny wybór podzbioru próby dla porównania szerokości przedziałów ufności w zadaniu 3.
+alpha <- 0.05
+n <- nrow(versi)
+q <- qt(1-alpha/2, n-1)
+width_mean = mean(versi$Sepal.Width)
+width_sd = sd(versi$Sepal.Width)
+student.interval <- c(width_mean - q*width_sd/sqrt(n-1), width_mean + q*width_sd/sqrt(n-1))
+# Jeśli założenie o normalności jest prawdziwe, to dla 95 powtórzeń na 100 przedział obliczony powyższym wzorem 
+# będzie zawierał prawdziwą (nieznaną) wartość średnią szerokości działki kielicha.
+# Jedno powtórzenie dotyczy tu zebrania i zmierzenia 50 okazów Iris versicolor.
+# Im mniej założenie o normalności jest spełnione, czyli im bardziej prawdziwy rozkład szerokości działki kielicha
+# różni się od normalnego, tym mniej dokładny będzie nasz wynik. 
+# Nie wiemy natomiast, czy wówczas tak obliczony przedział będzie zawierał prawdziwą wartość średnią 
+# rzadziej, czy częściej niż 95 razy na 100. 
+```
+
+```{r}
+student.interval
+```
+
+**Zadanie 4.** Porównaj wyniki z poprzedniego zadania z tzw. *asymptotycznym przedziałem ufności*, danym wzorem
+$$\left( \bar{X} - \frac{q(1-\alpha/2)}{\sqrt{n}}\hat{S}, \bar{X} + \frac{q(1-\alpha/2)}{\sqrt{n}}\hat{S} \right),$$
+gdzie $q(1-\alpha/2)$ jest kwantylem na poziomie $1 - \alpha/2$ ze standardowego rozkładu normalnego.  
+Matematycznie, asymptotyczny przedział ufności otrzymujemy, biorąc wzór na przedział dla znanego odchylenia standardowego, $( \bar{X} - \sigma q(1-\alpha/2)/\sqrt{n},\ \bar{X} + \sigma q(1-\alpha/2)/\sqrt{n})$, i podstawiając estymator $\hat{S}$ za ochylenie standardowe $\sigma$.  
+Daje to mniej dokładne wyniki, ponieważ nie uwzględniamy w tym wzorze zmienności estymatora $\hat{S}$. 
+Innymi słowy, stosując ten wzór zakładamy, że estymator $\hat{S}$ dał nam odchylenie standardowe z nieskończoną dokładnością.  
+Co z tego wynika jeśli chodzi o szerokość przedziału ufności? Co możemy zaobserwować, jeśli wykorzystamy mniej danych, np. 10 pomiarów *Iris versicolor*? A co się stanie, jeśli weźmiemy bardzo dużo danych? Dlaczego ten przedział nazywa się *asymptotycznym* przedziałem ufności?
+
+```{r, include=F}
+z <- qnorm(1-alpha/2)
+asymptotic.interval <- c(width_mean - z*width_sd/sqrt(n), width_mean+z*width_sd/sqrt(n))
+# Przedział ufności jest nieco węższy. 
+# To sugeruje, że dokładniej znamy wartość średnią naszej zmiennej, ale jest to oszustwo. 
+# Ponieważ założyliśmy, że znamy odchylenie standardowe, to w pewnym sensie daliśmy naszym wzorom
+# dodatkową, lecz nieprawdziwą informację, która została wykorzystana do złudnego zwiększenia dokładności przedziału. 
+# W rzeczywistości nie jest to przedział na poziomie ufności 0.95, tylko mniejszym - w tym sensie, że taki przedział
+# będzie zawierał wartość średnią rzadziej niż dla 95 powtórzeń na sto.
+
+# Można studentom zwrócić uwagę, że czasami musimy korzystać z takiego bezprawnego podstawienia estymatora pod znany parametr, 
+# ponieważ nie potrafimy zrobić nic lepszego, ale wówczas trzeba być świadomym kosztu takiego oszustwa. 
+
+# Dla mniejszych danych różnica w szerokości na ogół będzie większa, ponieważ wówczas estymator S ma większą wariancję,
+# która jest uwzględniona w studentyzowanym przedziale ufności. 
+
+# Estymator S jest zgodny, więc dla dużych danych oba przedziały będą praktycznie takie same.
+
+# W naszym przypadku różnica była bardzo nieznaczna (na 3. miejscu po przecinku), ponieważ w statystyce
+# całkiem często liczba 50 to już bardzo dobre przybliżenie nieskończoności ;-)
+```
+
+Z rozkładem t Studenta spotkamy się ponownie na następnych zajęciach, na których zajmiemy się testowaniem hipotez statystycznych.  
+Ten rozkład najczęściej pojawia się wtedy, gdy nie znamy odchylenia standardowego w naszej próbie i wykorzystujemy estymator średniej dzielony przez estymator odchylenia standardowego. Mowi się wówczas o statystyce $t$, *t-value* lub *t-score*:
+$$ T = \frac{\bar{X} - \mu}{\hat{S}}\sqrt{n}. $$
+gdzie $\hat{S}$ to pierwiastek z *nieobciążonego* estymatora wariancji. Taka statystyka ma rozkład t Studenta z $n-1$ stopniami swobody. Stopnie swobody należy (na razie) rozumieć po prostu jako parametr tego rozkładu - im więcej stopni swobody, tym bardziej przypomina od standardowy rozkład normalny, a im mniej, tym bardziej jego wartości są odległe od zera.
+
+W przypadku gdy wykorzystujemy średnią dzieloną przez znane odchylenie standardowe mówi się często o teście $z$ i statystyce $z$, *z-value* lub *z-score*:
+$$ Z = \frac{\bar{X} - \mu}{\sigma}\sqrt{n} $$
+Czynnik $\sqrt{n}$ pojawia się tutaj, ponieważ dla próby statystycznej z rozkładu normalnego mamy $\bar{X} \sim \mathcal{N}(\mu, \sigma^2/n)$. Wówczas (oczywiście jeśli $\mu$ oraz $\sigma$ są poprawne) mamy $Z \sim \mathcal{N}(0, 1)$. 
+
+Więcej na temat rozkładu t, porównanie go z rozkładem normalnym, i kilka wskazówek kiedy używać jednego lub drugiego można usłyszeć [tutaj](https://www.youtube.com/watch?v=Kzqm8F9Le_4). Więcej na temat *z-score* można przeczytać [tutaj](https://en.wikipedia.org/wiki/Standard_score), a na temat *t-score* [tutaj](https://en.wikipedia.org/wiki/T-statistic). 
+
+
+
+## Zadania dodatkowe.
+
+**Zadanie 1.** Wylosuj 1000 prób po 10 obserwacji z rozkładu jednostajnego na przedziale $[0, a]$ dla wybranej wartości parametru $a$. Następnie:  
+  1. Wykorzystaj te próbki do estymacji parametru $a$ metodą największej wiarygodności: $\hat{a} = \max_i X_i$. Przedstaw otrzymane wartości $\hat{a}$ na histogramie.  
+  2. Oblicz przedział ufności dla próby numer 1 korzystając ze wzoru $$(\max(X_n), \frac{\max(X_n)}{\alpha^{1/n}})$$.   
+  3. Oblicz przedział ufności dla każdej próby i sprawdź, dla ilu prób przedział zawiera prawdziwą wartość parametru $a$.
+
+```{r, include = F}
+U <- runif(1000*10, max=10)
+U <- matrix(U, nrow=10)
+MLE <- apply(U, 2, max)
+alpha <- 0.05
+upper.limits <- apply(U, 2, max)
+upper.limits <- upper.limits/alpha^0.1
+mean(upper.limits >= 10)  
+# W około 0.95 przypadków górny kraniec przedziału ufności jest większy niż wartość parametru. 
+# Nie przejmujemy się dolnym krańcem ponieważ zawsze max(X_n) <= a. 
+```
+

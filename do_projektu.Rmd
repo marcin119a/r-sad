@@ -1,0 +1,103 @@
+```{r}
+library(ISLR)
+#summary(Credit)
+lm(Balance ~ Student + Limit, data=Credit)
+#head(Credit)
+attach(Credit)
+View(Credit)
+library(fmsb)
+```
+Duża wartość VIF sugeruje współliniowość pewnych predyktorów. Na przykład, wartości VIF dla predyktorów
+
+Instalacja pakietu do VIF
+```{r}
+#install.packages("fmsb")
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(Credit, aes(x=Limit, y=Rating)) + geom_point() + theme_minimal()
+```
+
+```{r}
+cov(Limit, Rating)
+```
+
+```{r}
+library(ggplot2)
+ggplot(Credit, aes(x=Limit, y=Age)) + geom_point() + theme_minimal()
+```
+
+```{r}
+cov(Limit, Age)
+```
+
+### Regresja ze względu na niewspólninowe predytkory:
+
+```{r}
+  summary(lm(Balance ~ Age + Limit))
+```
+```{r}
+my_cols <- c("blue", "yellow")  
+pairs(Credit[, c(2,3,5,6,12)], pch = 19,  cex = 0.5, col = my_cols[], lower.panel = NULL)
+```
+
+
+```{r}
+cov(Age, Income)
+```
+Słabo
+```{r}
+cov(Age, Education)
+```
+Limit i Raiting
+```{r}
+cov(Limit, Rating)
+```
+
+```{r}
+  summary(lm(Balance ~ Limit + Age))
+```
+```{r}
+  summary(lm(Balance ~ Rating + Limit))
+```
+
+```{r}
+VIF(lm(Age ~ Rating + Limit)) # 1.011385
+VIF(lm(Rating ~ Age + Limit)) # 160.6683
+VIF(lm(Limit ~ Rating + Age)) # 160.5929
+#pairs(people[, c(1,2,3,6,8)], pch = 19,  cex = 0.5, col = my_cols[], lower.panel = NULL)
+```
+
+
+ZADANIE5:
+
+
+
+```{r}
+library(ISLR)
+pairs(Auto)
+attach(Auto)
+#hist(mpg)
+```
+
+```{r}
+library(ggplot2)
+ggplot(Auto, aes(x=mpg, y=horsepower)) + geom_point() + theme_minimal()
+```
+
+```{r}
+
+model <- lm(mpg ~ horsepower)
+horsepower2 <- horsepower^2
+summary(model)
+
+quadratic.model <-lm(mpg ~ horsepower + horsepower2)
+summary(quadratic.model)
+```
+
+Ocena dokładności modelu- odchylenie standardowe składnika resztowego:
+
+
+

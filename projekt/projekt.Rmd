@@ -1,68 +1,139 @@
-
+1. Wczytaj dane, obejrzyj je i podsumuj w dwóch-trzech zdaniach. 
 ```{r}
 people <- read.csv("people.tab", header=TRUE, sep="\t")
 attach(people)
 View(people)
-
 ```
 
 
-Zadanie1.
+pozostałe zmienne są zmiennymi objaśniającymi (niezależnymi):
+```age, weight, height, gender, married, number_of_kids, pet```
 
-1. Wczytaj dane, obejrzyj je i podsumuj w dwóch-trzech zdaniach. Pytania pomocnicze: ile
-jest obserwacji, ile zmiennych ilościowych, a ile jakościowych? Czy są zależności w zmiennych
-objaśniających (policz i podaj VIF)? Czy występują jakieś braki danych?
-```{r}
 
-```
-
+### Zadanie1.
 Ile jest obserwacji, ile zmiennych ilościowych, a ile jakościowych? 
-### Zmienne jakościowe:
+#### Zmienne jakościowe:
 married, gender, pet 
-### Zmienne ilościowe:
+#### Zmienne ilościowe:
 * age, weight, height, number_of_kids, expenses
 ### Obserwacji:
 500.
 
 ```{r}
-length(age) # wydatki miesieczne
+length(people$age) # obserwacja ilość
+```
+### Zmienne objasnaijace: 
+
+
+
+Czy są zależności w zmiennych objaśniających (policz i podaj VIF)? 
+
+VIF - czynnik infalcji wairancji
+
+```{r}
+install.packages("car")
+
+#library(car)
+#model_rl <- lm(expenses ~ age + weight + height + number_of_kids)
+#vif(model_rl)
+VIF(lm(age ~ weight + height + number_of_kids))
+VIF(lm(weight ~ age + height + number_of_kids))
+VIF(lm(height ~ age + number_of_kids + weight))
+VIF(lm(number_of_kids ~ age + height + weight))
+
 ```
 
+VIF dla każdego z predyktorów ```age, weight, height, number_of_kids``` jest w okolicach 1, wówczas nie mamy przesłanek by twierdzić dużej współliniowości predyktór. 
+
+
+Czy występują jakieś braki danych?
+```{r}
+which(is.na(people))
+```
+To oznacza, że nie mamy braków w danych. 
+
+
+
 2. Podsumuj dane przynajmniej trzema różnymi wykresami. Należy przygotować:
+
+Wykres pokazująćy jak zmienne objaśniające zależa od siebie, oraz jak zmienna objaśniana ```expenses``` zależy od wszystkich
 ```{r}
 my_cols <- c("blue", "yellow")  
-pairs(people[, c(1,2,3,6,8)], pch = 19,  cex = 0.5, col = my_cols[iris$Species], lower.panel = NULL)
+pairs(people[, c(1,2,3,4,5,6,7,8)], pch = 19,  cex = 0.5, col = my_cols[], lower.panel = NULL)
 ```
 
 ```{r}
  boxplot(number_of_kids~pet ,data=people, main="Kids love pets",
    xlab="Pets", ylab="Numer of kids")
 ```
-
-
-
-
-### Zadanie3
-
-Oszacuj model regresji linowej, przyjmując za zmienną zależną (y) wydatki domowe
-(expenses) a zmienne niezależne (x) wybierając spośród pozostałych zmiennych. Rozważ, czykonieczne są transformacje zmiennych lub zmiennej objaśnianej. Podaj RSS, $R^2$ , p-wartości i
-oszacowania współczynników i wybierz właściwe zmienne objaśniające, które najlepiej
-tłumaczą Household_expenses. Sprawdź czy w wybranym przez Ciebie modelu spełnione są
-założenia modelu liniowego i przedstaw na wykresach diagnostycznych: wykresie zależności
-reszt od zmiennej objaśnianej,na wykresie reszt studentyzowanych i na wykresie dźwigni i
-przedyskutuj, czy są spełnione.
-
-
-
-### Zadanie4 
-
-
-```jedną dot. niezależności między dwoma zmiennymi jakościowymi```
-W tym celu wykorzystam Chi-square pearsona.
 ```{r}
-## Zbudować tablice kontygnencji
+counts <- table(people$married, people$pet)
+barplot(counts, main="Married Distribution ",
+   xlab="Number of pet", legend = rownames(counts),  beside=TRUE)
+```
 
-confusion_matrix<- table(people$gender, people$married)
+
+### Zadanie2 
+####  Róznica między średnią wartością wybranej zmiennej:
+
+Wykorzystuje test t-Studenta dla populacji o różnych licznościach, ale równych wariancjach (Wykład 2). Zakładamy poziom istotności 
+
+Zakładamy, że średnia zarobków dla kobiet jest równa średniej zarobków dla mężczyzn:
+$$H_0: \mu_1 = \mu_2$$
+Przeciwko hipotezie alternatwynej: że jest różna
+$$H_1: \mu_1 \neq \mu_2$$
+
+
+```{r}
+x = people$weight[people$gender == "man"]
+y = people$weight[people$gender == "woman"]
+
+t.test(x, y, var.equal = TRUE)
+```
+Decyzja:
+Wybieram hipotezę alternatywną, że różnica w średnich nie jest równa 0, tzn średnie są różne. 
+
+
+#### Niezależności między dwoma zmiennymi ilościowymi:
+Test Spearmana:
+Dana jest próba losowa postaci $(X_1, Y_1), \ldots (X_n,Y_n)$, gdzie X to ```expenses``` a Y to ```age``` 
+
+```{r}
+  X = people$expenses
+  Y = people$age
+```
+Formuje hipotezę:
+$$H_0: \text{X i Y są niezależne}$$
+przeciw:
+$$H_1: \text{istnieje jakikolwiek rodzaj zależności między X i Y}$$
+
+Wyliczamy statystykę testu, tzn współcznnik korelacji rang Spearmana. 
+```{r}
+cor(X,Y,method="spearman")
+cor(X,Y,method="pearson")
+```
+
+```{r}
+cor.test(X, Y,method="spearman")
+cor.test(X, Y,method="pearson")
+```
+Nasz współcznnik jest na poziomie 0.8 dla obydwu hipotez, wówczas przyjmujemy hipotezę alternatywną, że nasze dane są zależne. 
+
+
+#### Jedną dot. niezależności między dwoma zmiennymi jakościowymi
+
+W tym celu wykorzystam Chi-square pearsona.
+$$H_0: \text{zmienne X i Y są niezależne} $$
+przeciwko:
+$$
+  H_1: \text{zmienne X i Y są zależne}  
+$$
+Wynkonuje test na poziomie istotności $\alpha = 0.05$
+
+Buduję macierz kontygnencji ## Zbudować tablice kontygnencji:
+
+```{r}
+  confusion_matrix<- table(people$gender, people$married)
 ```
 
 ```{r}
@@ -80,27 +151,110 @@ chisq
 
 
 
-```Jedna dot. rozkładu zmiennej (np. "zmienna A ma rozkład wykładniczy z parameterm 10")```
+#### Jedna dot. rozkładu zmiennej (np. "zmienna A ma rozkład wykładniczy z parametrem 10")
 
 W tym celu przeprowadzę test: Kołomogorowa dla zmiennej ```expences```:
+
+I wprowadzam hipotezę, na poziomie istotności $\alpha = 0.05"
+$$H_0: \text{zmienna A ma rozkład wykładniczy z parametrem 10}$$
+przeciw:
+$$H_1 \text{ zmienna A nie ma rozkładu wykładniczego z parametrem 10}$$
 
 ```{r}
   ks.test(expenses, "pexp", 3)
 ```
+Statystyka testowa $D = 0.802$, wówczas nasza p-wartość jest mniejsza niż poziom istotności. 
+
+
+3.Podaj przedziały ufności dla wartości średniej i wariancji dla zmiennych wiek i wzrost.
+Jeżeli w celu wyliczenia przedziału ufności musisz poczynić jakieś założenia(np.założyć że zmienna pochodzi z rozkładu normalnego), zaznacz to i skomentuj czy wydaje Ci się to w danym przypadku uprawnione.
+Opisz wszelkie dodatkowe operacje, jakie zostały wykonane przed testem(takie jak usunięcie obserwacji odstających).
+Przedyskutuj, dla której ze zmiennych oczekujesz prawidłowych wyników. 
 
 
 
+```{r}
+library(ggplot2)
+
+qqplot_age <- ggplot(people) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
+qqplot_age
+
+qqplot_age_elim <- ggplot(eliminated) + stat_qq(aes(sample=age)) + stat_qq_line(aes(sample=age)) + theme_minimal() + ggtitle('Wykres kwantylowy wieku- bez outlierow') + xlab('Kwantyl teoretyczny') + ylab('Kwantyl obserwowany')
+qqplot_age_elim
+summary(eliminated$age)
+```
+
+Wykorzystujać metodę IQR(https://en.wikipedia.org/wiki/Interquartile_range) dla outlier detextion, usuwam outliery dla ```age```:
+
+```{r}
+library(ggplot2)
+qqplot_height <- ggplot(people) + stat_qq(aes(sample=height)) + stat_qq_line(aes(sample=height)) + theme_minimal() + ggtitle('Wykres kwantylowy wysokości') + xlab('Theretical Quantiles') + ylab('Sample Quantiles')
+qqplot_height
+
+Q <- quantile(people$height, probs=c(.25, .75), na.rm = FALSE)
+iqr <- 1.5 * IQR(people$height)
+eliminated <- subset(people, people$height > (Q[1] - iqr) & people$height < (Q[2]+iqr))
+qqplot_age <- ggplot(eliminated) + stat_qq(aes(sample=height)) + stat_qq_line(aes(sample=height)) + theme_minimal() + ggtitle('Wykres kwantylowy wysokości bez odstających') + xlab('Theretical Quantiles') + ylab('Sample Quantiles')
+qqplot_age
+summary(eliminated$height)
+```
+
+Wykorzystujać metodę IQR dla outlier detextion, usuwam outliery dla ```height```:
+Usunęcie poprawia rozkład i smiało mogę założyć że dane ```height``` pochodzą z rozkładu normalnego. 
 
 
+Widzimy z wykresów kwantowlowych wysokości, że założenie o rozkładu próbki jako rozkładu normalności jest spełnione. 
+
+
+Przy założeniu, że zmienna ```age``` ma rozkład normalny, ustalam próg ufności $\alpha = 0.05$
+```{r}
+alpha <- 0.05
+n <- nrow(people)
+q <- qt(1-alpha/2, n-1)
+age_mean = mean(people$age)
+age_sd = sd(people$age)
+student.interval <- c(age_mean - q*age_sd/sqrt(n-1), age_mean + q*age_sd/sqrt(n-1))
+print(student.interval)
+# Jeśli założenie o normalności jest prawdziwe, to dla 95 powtórzeń na 100 przedział obliczony powyższym wzorem 
+# będzie zawierał prawdziwą (nieznaną) wartość średnią szerokości działki kielicha.
+# Jedno powtórzenie dotyczy tu zebrania i zmierzenia 50 okazów Iris versicolor.
+# Im mniej założenie o normalności jest spełnione, czyli im bardziej prawdziwy rozkład szerokości działki kielicha
+# różni się od normalnego, tym mniej dokładny będzie nasz wynik. 
+# Nie wiemy natomiast, czy wówczas tak obliczony przedział będzie zawierał prawdziwą wartość średnią 
+# rzadziej, czy częściej niż 95 razy na 100. 
+```
+
+### Zadanie5
+
+Oszacuj model regresji linowej, przyjmując za zmienną zależną (y) wydatki domowe (expenses) a zmienne niezależne (x) wybierając spośród pozostałych zmiennych. Rozważ, czy konieczne są transformacje zmiennych lub zmiennej objaśnianej.
+
+Podaj RSS, $R^2$ , p-wartości i oszacowania współczynników i wybierz właściwe zmienne objaśniające, które najlepiej tłumaczą ```expenses```. Sprawdź czy w wybranym przez Ciebie modelu spełnione są założenia modelu liniowego i przedstaw na wykresach diagnostycznych: wykresie zależności reszt od zmiennej objaśnianej,na wykresie reszt studentyzowanych i na wykresie dźwigni i przedyskutuj, czy są spełnione.
+    
+```{r}
+library(ggplot2)
+ggplot(people, aes(x=age, y=expenses)) + geom_point() + theme_minimal()
+```
+```{r}
+library(ggplot2)
+ggplot(people, aes(x=height, y=expenses)) + geom_point() + theme_minimal()
+```
+```{r}
+library(ggplot2)
+ggplot(people, aes(x=number_of_kids, y=expenses)) + geom_point() + theme_minimal()
+```
+```{r}
+library(ggplot2)
+ggplot(people, aes(x=weight, y=expenses)) + geom_point() + theme_minimal()
+```
 
 Mój pierwszy krok, to zbudowanie modelu z wszystkimi predyktorami, a więc:
-```weight ~ age +  height +  weight + number_of_kids```
+```expenses ~ age +  height +  weight + number_of_kids```
 
 
 ```{r}
 library(ggplot2)
 model_rl <- lm(expenses ~ age + weight + height + number_of_kids)
-summary(model_rl) 
+summary_model <- summary(model_rl) 
 ```
 
 Następnie chce wybrać tylko istotne predyktory. 
@@ -108,13 +262,24 @@ Widzimy, że wpływ
 
 
 
+Z wykładu: 
+```{r}
+library(MASS)
+# Fit the full model 
+full.model <- lm(expenses ~., data = people)
+summary(full.model)
+# Stepwise regression model
+step.model <- stepAIC(full.model, direction = "both", 
+                      trace = FALSE)
+summary(step.model)
+```
 
+Resztowa suma kwadratów
 
-
-
-
-
-
-
+```{r}
+RSS <- sum(resid(step.model)^2)
+r2 <- step.model$r.squared
+r2
+```
 
 

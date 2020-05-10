@@ -1,0 +1,27 @@
+Compasion of all models:
+
+
+Problem: 
+  
+
+
+```{r}
+library(ggplot2)
+library(xtable)
+people <- read.csv("https://students.mimuw.edu.pl/~mw404851/sr_50/logs_logs_1000_50.csv", header=TRUE, sep=",")
+head(people)
+
+a <- ggplot(people, aes(x = X1.74))
+# Change line color by sex
+a + geom_histogram(aes(color = X1.74), fill = "white", 
+                   position = "identity") +
+  scale_color_manual(values = c("#00AFBB", "#E7B800")) 
+# change fill and outline color manually 
+a + geom_histogram(aes(color = sex, fill = sex),
+                         alpha = 0.4, position = "identity") +
+  scale_fill_manual(values = c("#00AFBB", "#E7B800")) +
+  scale_color_manual(values = c("#00AFBB", "#E7B800"))
+#counts <- table(people$married, people$pet)
+#barplot(counts, main="Married Distribution ",
+#   xlab="Number of pet", legend = rownames(counts),  beside=TRUE)
+```

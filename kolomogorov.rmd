@@ -11,7 +11,7 @@ uj = (xj - 3)/ 2
 ks.test(uj, "pnorm")
 
 
-#xseq<-st
+#xseq<-st 
 
 #densities<-dnorm(xseq, 0,1)
 #densities
@@ -153,7 +153,7 @@ outcomes3 = data.frame(
   F.n,
   abs(F.uj-F.n)
 )
-ks.test(uj, "pnorm", 0, 1)
+  ks.test(uj, "pnorm", 0, 1)
 
 zadanie3= table(outcomes3)
 head(zadanie3)
