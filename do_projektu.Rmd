@@ -127,6 +127,10 @@ mu<-mean(mtcars$mpg)
 #odchylenie standardowe
 sigma<-sd(mtcars$mpg)
 length(mtcars$mpg)
+x <- lm(mpg ~ cyl + disp, mtcars)
+RSS <- sum(resid(x)^2)
+RSS
+
 ```
 ```{r}
 round(sqrt(sigma*length(mtcars$mpg)/qchisq(c(1-.025,.025), length(mtcars$mpg-1))),2)

@@ -1,0 +1,64 @@
+Zadanie 2. Regresja logistyczna pozwala na przypisanie obserwacji do jednej z dwóch klas. Istnieją sposoby na rozszerzenie tej techniki na przypadek K>2 klas. Jednym z nich jest wytrenowanie K klasyfikatorów binarnych, gdzie i-ty klasyfikator decyduje czy obserwacja należy do klasy i, czy do jakiejś innej klasy. Każdej obserwacji przypisujemy następnie klasę o najwyższym prawdopodobieństwie. Jest to tak zwana klasyfikacja one-vs-all lub one-vs-rest. Innym sposobem na poradzenie sobie z większą liczbą klas, który wykracza jednak poza program tego przedmiotu, jest regresja wielomianowa.
+
+
+
+
+Przykładowy wynik:
+
+Załaduj dane iris. Podziel dane na zbiór treningowy i testowy. Wykorzystaj w tym celu funkcję sample.split z pakietu caTools, która zadba o to, aby w obu zbiorach znalazły się podobne proporcje różnych gatunków. Jest to o tyle ważne, że jeśli do obu zbiorów przypisujemy obserwacje całkowicie losowo, to może się zdarzyć, że w zbiorze testowym dostaniemy wyłącznie jeden gatunek. To z kolei sprawi, że nasz błąd testowy nie będzie odawał rzeczywistej jakości klasyfikatora.
+```{r}
+library(MASS)
+data(iris)
+summary(iris)
+library(caTools)
+```
+
+Dodaj do zbioru treningowego trzy kolumny binarne (czyli factory o dwóch poziomach), gdzie i-ta kolumna będzie zawierała informację czy obserwacja należy do i-tego gatunku, czy nie. Utwórz trzy modele logistyczne objaśniające te nowe kolumny za pomocą zmiennej Sepal.Length. Alternatywnie, zamiast dodawać trzy kolumny do tabeli iris, możesz utworzyć trzy nowe ramki danych. Możesz też wybrać inny zestaw zmiennych objaśniających.
+```{r}
+msk <- sample.split(iris$Species, SplitRatio = 2/3)
+train <- iris[msk, ]
+test_set <- iris[-msk,] 
+train$sentosa <-  train$Species == "setosa"
+train$versicolor <- train$Species == "versicolor"
+train$virginica <-  train$Species == "virginica"
+head(train)
+```
+
+Dla każdej obserwacji ze zbioru testowego oblicz, korzystając z funkcji predict(), wektory prawdopodobieństw przynależności do poszczególnych gatunków. Przypisz każdej obserwacji gatunek o najwyższym prawdopodobieństwie. 
+```{r}
+sentosa_m <- glm(sentosa ~ Sepal.Length, train, family = binomial)
+versi_m <- glm(versicolor ~ Sepal.Length, train, family = binomial)
+virgin_n <- glm(virginica ~ Sepal.Length, train, family = binomial)
+```
+
+```{r}
+prob_sent <- predict(sentosa_m, test_set, type = 'response')
+prob_vers <- predict(versi_m, test_set,  type = 'response')
+prob_virg <- predict(virgin_n, test_set, type = 'response')
+head(prob_sent)
+```
+
+Który gatunek jest najprecyzyjniej klasyfikowany?Może się tu przydać funkcja max.col. Utwórz macierz błędu. Jaka jest ogólna dokładność klasyfikatora?
+
+```{r}
+class <- max.col(matrix(c(prob_sent, prob_vers, prob_virg), ncol=3))
+class <- factor(class, levels = 1:3, labels = c('setosa', 'virginica', 'versicolor'))
+head(class)
+```
+
+Możesz również sprawdzić, co się stanie, jeśli dodamy do modelu więcej zmiennych objaśniających. 
+```{r}
+sentosa_m <- glm(sentosa ~ Sepal.Length + Petal.Length, train, family = binomial)
+versi_m <- glm(versicolor ~ Sepal.Length + Petal.Length, train, family = binomial)
+virgin_n <- glm(virginica ~ Sepal.Length + Petal.Length, train, family = binomial)
+```
+
+
+```{r}
+d<- table('Predicted' = class, 'True' = test_set$Species)
+d
+```
+Dokładnośc:
+```{r}
+sum(diag(d))/sum(d) #overall accuracy
+```

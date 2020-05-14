@@ -1,0 +1,83 @@
+Ta baza danych o raku piersi została uzyskana ze szpitali University of Wisconsin, Madison od dr Williama H. Wolberga. Ocenił on biopsje guzów piersi dla 699 pacjentek do 15 lipca 1992 r.; każda z dziewięciu cech została oceniona w skali od 1 do 10, a wynik jest również znany. Istnieje 699 wierszy i 11 kolumn.
+
+Ta ramka danych zawiera następujące kolumny:
+
+ID
+numer kodu próbki (nie jest unikatowy).
+V1
+Grubość kępy.
+V2
+jednolitość wielkości komórek.
+V3
+jednolitość kształtu komórek.
+V4
+marginalna przyczepność.
+V5
+rozmiar pojedynczych komórek nabłonkowych.
+V6
+gołe jądra (brak 16 wartości).
+V7
+nijaka chromatyna.
+V8
+normalne jądra.
+V9
+mitozy.
+Klasa
+"łagodny" lub "złośliwy".
+
+```{r}
+library(MASS)
+?biopsy
+dim(biopsy)
+
+
+```
+
+
+
+```{r}
+head(biopsy)
+```
+
+```{r}
+biopsy <- na.omit(biopsy)
+dim(biopsy)
+```
+
+Po usunięciu zawierające brakujące warotści zostały nam 683 obserwacje. 
+```{r}
+levels(biopsy$class)
+```
+```{r}
+#benign łagodny
+#malignant zlośliwy
+```
+
+Sprawdzimy zbalansowanie klas:
+```{r}
+table(biopsy$class)
+```
+
+
+
+Prywatna opinia autora skryptu jest taka, że mamy w miarę dobre zbalansowanie. Na jeden nowotwór złośliwy przypadają dwa niezłośliwe. To oznacza, że klasyfikator przypisujący każdemu nowotworowi typ niezłośliwy może uzyskać dokładność na poziomie 65% = 444/(444+239), co nie jest dużo lepsze niż klasyfikator losowy. Możemy również oszacować jak zbalansowane zbiory testowe otrzymamy.
+Oszacowanie
+Załózmy, ze wybieramy losowo 60 obserwacji do zbioru testowego. Niech $X$ będzie liczbą wylosowanych nowotworów złośliwych. Dla uproszczenia przyjmijmy na chwilę, że obserwacje do zbioru testowego wybieramy ze zwracaniem. Wówczas możęmy przybliżyć rozkład X jako 
+$$
+X \sim Bin(60, 239/(239+444)) = Bin(60, 0.35)
+$$
+ Wylosowana liczba nowotworów złożliwych na 95% mieści się w przedziale od qbinom(0.025, 60, 0.35) == 14 do qbinom(0.975, 60, 0.35)) == 28, co daje stosunkowo niewielkie odchylenie od oczekiwanej wartości równej 0.35*60 = 21: długość otrzymanego przedziału względem wartości oczekiwanej wynosi (28 - 14)/21 == 0.66.
+ 
+```{r}
+qbinom(0.025, 60, 0.35) # 14
+```
+```{r}
+qbinom(0.97, 60, 0.35)
+```
+Wartość oczekiwana Bin()
+
+```{r}
+## logistic regression 
+model <- glm(class ~ . - ID, biopsy, family=binomial)
+summary(model)
+```

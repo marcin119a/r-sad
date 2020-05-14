@@ -1,0 +1,40 @@
+```{r}
+library(ISLR)
+head(Auto)
+View(Auto)
+```
+```{r}
+#attach(Auto)
+  
+se_total = 0
+for (i in 1:nrow(Auto)){
+  train <-Auto[i,]
+  test <- Auto[-i,]
+  lmfit <- glm(mpg ~ horsepower+cylinders+ weight )
+    se=(test$mpg - predict(lmfit, test))^2
+    se_total = se_total + se
+}
+
+mse = se_total / nrow(Auto)
+mse
+
+```
+
+```{r}
+train.idx <- sample(1:nrow(Auto), round(0.7*nrow(Auto)))
+train<-Auto[train.idx,]
+test<-Auto[-train.idx,]
+test$mpg
+```
+
+```{r}
+library(boot)
+lmfit<-glm(mpg~horsepower+cylinders+ weight, data=Auto)
+
+#LOOCV: 
+m<-cv.glm(data=Auto, lmfit, K=5)
+
+#Błąd wyznaczony w oparciu o średnią z 5: 
+mse = m$delta[1]
+mse 
+```
