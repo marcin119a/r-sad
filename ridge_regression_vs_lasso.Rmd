@@ -1,0 +1,77 @@
+```{r}
+library(ISLR)
+library(glmnet)
+library(dplyr)
+library(tidyr)
+Hitters = na.omit(Hitters)
+```
+
+```{r}
+x = model.matrix(Salary~., Hitters)[,-1] # trim off the first column
+# leaving only the predictors
+y = Hitters %>%
+  select(Salary) %>%
+  unlist() %>%
+  as.numeric()
+```
+
+```{r}
+set.seed(1)
+
+train = Hitters %>%
+  sample_frac(0.5)
+
+test = Hitters %>%
+  setdiff(train)
+
+x_train = model.matrix(Salary~., train)[,-1]
+x_test = model.matrix(Salary~., test)[,-1]
+
+y_train = train %>%
+  select(Salary) %>%
+  unlist() %>%
+  as.numeric()
+
+y_test = test %>%
+  select(Salary) %>%
+  unlist() %>%
+  as.numeric()
+```
+
+```{r}
+grid = 10^seq(10, -2, length = 100)
+```
+
+### grzbietowa gdy alfa = 0
+grid od $10^{10}$ do $10^{-2}$
+```{r}
+
+ridge_mod = glmnet(x, y, alpha = 0, lambda = grid)
+```
+
+### 1 to jest lasso
+
+```{r}
+ridge_mod$lambda[50]
+sqrt(sum(coef(ridge_mod)[-1,50]^2))
+```
+```{r}
+plot(ridge_mod) 
+```
+
+```{r}
+lasso_mod = glmnet(x_train, 
+                   y_train, 
+                   alpha = 1, 
+                   lambda = grid) # Fit lasso model on training data
+
+plot(lasso_mod)    # Draw plot of coefficients
+```
+```{r}
+set.seed(1)
+cv.out = cv.glmnet(x_train, y_train, alpha = 1) # Fit lasso model on training data
+plot(cv.out) # Draw plot of training MSE as a function of lambda
+bestlam = cv.out$lambda.min # Select lamda that minimizes training MSE
+lasso_pred = predict(lasso_mod, s = bestlam, newx = x_test) # Use best lambda to predict test data
+mean((lasso_pred - y_test)^2) # Calculate test MSE
+```

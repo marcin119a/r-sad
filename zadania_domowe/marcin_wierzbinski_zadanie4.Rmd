@@ -1,0 +1,83 @@
+Zadanie 5. Przypomnij sobie informacje dotyczące błędu treningowego z Laboratorium 6 i odpowiadającego mu wykładu. Następnie:
+
+
+    Utwórz model wyaśniający procent tkanki tłuszczowej, ale tym razem wykorzystaj jedynie co drugą obserwację ze zbioru danych. Możesz wykorzystać argument subset funkcji lm.
+    Wykorzystaj funkcję predict do przewidzenia wartości zmiennej X.Bfat dla pozostałych obserwacji. Tutaj niestety nie ma argumentu subset.
+    Oblicz błąd średniokwadratowy treningowy oraz testowy (jeśli nie pamiętasz, co to takiego, to przypomnij sobie Wykład 5).
+
+    Po wykonaniu powyższych punktów, wytrenuj nowy model, objaśniający zmienną X.Bfat za pomocą zmiennych Sport, Sex, SSF, LBM, Wt. Nowy model wytrenuj na tym samym zbiorze treningowym co poprzedni. Następnie:  
+
+
+	Sport 		Sport
+	Sex 		male or female
+	Ht 		Height in cm
+	Wt 		Weight in kg
+	LBM 		Lean body mass
+	RCC 		Red cell count
+	WCC 		White cell count
+	Hc 		Hematocrit
+	Hg 		Hemoglobin
+	Ferr 		Plasma ferritin concentration
+	BMI 		Body mass index = weight/height^2
+	SSF 		Sum of skin folds
+	%Bfat 		% body fat
+
+```{r}
+
+ais <- read.delim("~/Matematyka/SAD/laby2020/ais.txt", sep="\t")
+to_train <- seq(2, nrow(ais), by=2)
+
+to_train_set = ais[-to_train, ]
+
+# first model
+model <- lm(X.Bfat ~ ., ais, subset = to_train)
+model_fit <- predict(model, to_train_set)
+
+# second model
+small_model <- lm(X.Bfat ~ Sport+Sex+SSF+LBM+Wt, ais, subset = to_train)
+small_model_fit <- predict(small_model, ais[-to_train, ])
+```
+
+
+
+```{r}
+r_squ_m <- summary(model)$r.squared
+r_squ_small_m <- summary(small_model)$r.squared
+
+
+print(r_squ_m)
+print("VS")
+print(r_squ_small_m)
+```
+
+
+
+Model mse:
+```{r}
+train_mse <- mean(model$residuals^2)
+train_mse
+test_mse <- mean((model_fit - ais[-to_train, 'X.Bfat'])^2)
+test_mse
+```
+
+Błąd terningowy jest większy niż błąd testowy, to wskazuję na przeuczenie danych. 
+
+
+Model small mse
+```{r}
+small_train_mse <- mean(small_model$residuals^2)
+small_train_mse
+small_test_mse <- mean((small_model_fit - ais[-to_train, 'X.Bfat'])^2)
+small_test_mse
+```
+
+Błąd terningowy jest większy niż błąd testowy, to wskazuję również na przeuczenie danych. 
+
+
+Współczynnik determinacji R^{2} zawsze wzrasta wraz z liczbą predyktorów i jest bliski 1, co sugeruje, że duża cześć zmienności Y zostaje wyjasniona. Dodanie większej ilości predyktorów poprawia dopasowanie. 
+
+Mniejszy model wyjaśnia odrobinę mniej niż pełny model. Osobiście wybrałbym mniejszy model. 
+
+
+
+

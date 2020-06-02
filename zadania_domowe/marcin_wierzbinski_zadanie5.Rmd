@@ -52,13 +52,18 @@ sentosa_m <- glm(sentosa ~ Sepal.Length + Petal.Length, train, family = binomial
 versi_m <- glm(versicolor ~ Sepal.Length + Petal.Length, train, family = binomial)
 virgin_n <- glm(virginica ~ Sepal.Length + Petal.Length, train, family = binomial)
 ```
+Algorytm nie zbiega, 
 
 
 ```{r}
 d<- table('Predicted' = class, 'True' = test_set$Species)
 d
 ```
+
+
 Dokładnośc:
 ```{r}
 sum(diag(d))/sum(d) #overall accuracy
 ```
+
+Gatunek najbardziej klasyfikowany: setosa

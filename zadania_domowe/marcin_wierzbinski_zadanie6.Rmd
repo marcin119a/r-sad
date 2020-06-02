@@ -1,0 +1,139 @@
+
+Zadanie 1. W tym zadaniu porównamy techniki LASSO oraz regresji grzbietowej z kryteriami informacyjnymi (AIC, BIC) w przypadku regresji liniowej.
+
+Naszym celem jest zbadanie, jak dobrze każda z tych technik oddaje prawdziwy model oraz jak dobrze nadaje się do predykcji. Metoda LASSO została omówiona na Wykładzie 10. Więcej informacji na jej temat można przeczytać m.in. tutaj, a obejrzeć tutaj (ten tutorial dotyczy regresji logistycznej, ale myślę, że na tym etapie domyślicie się już, jak to się ma do regresji liniowej). Jedną z największych zalet metody LASSO, poza tym, że umożliwia całkiem skuteczny wybór modelu, jest to, że można ją stosować do danych w których mamy więcej cech niż obserwacji.
+
+
+
+```{r}
+B <- c(crim=1.52274943515658, zn=-2.79081122064963, indus=0, 
+       nox=1.4332089680247, rm=1.03212527744472, age=0, 
+       dis=2.75923800934106, tax=2.43884606240317, ptratio=0, 
+       black=-0.371096117421985, lstat=1.09251574007794, medv=0)
+```
+
+
+- Załaduj dane Boston z pakietu MASS. Sprawdź w dokumentacji typy zmiennych. Jakiego typu może być zmienna ‘rad’?
+- Usuń zmienne jakościowe. Powinno pozostać 12 zmiennych ilościowych.
+- Przeskaluj dane za pomocą funkcji scale. Jakiego typu jest wynik? Skonwertuj go z powrotem do data.frame.
+### Usuwamy zmienne jakościowe i skalujemy
+```{r}
+library(MASS)
+data(Boston)
+head(Boston)
+
+x_vars <- as.matrix(Boston[, -c(4, 9)])
+x_vars <- scale(x_vars)
+x_vars <- data.frame(x_vars)
+head(x_vars)
+```
+
+### Wybieramy zbiór treningowy
+Żeby ocenić poszczególne metody, w pierwszym kroku podziel dane na zbiór treningowy rozmiaru 60 oraz zbiór testowy złożony z pozostałych obserwacji. Jeśli masz ochotę zrobić to porządniej, to możesz przeprowadzić walidację krzyżową, ale w tym zadaniu nie jest to obowiązkowe.
+```{r}
+train_set <- sample(1:nrow(x_vars), 60, rep=F)
+X_train <- x_vars[train_set, ]
+X_test <- x_vars[-train_set, ]
+```
+
+```{r}
+head(x_vars)
+```
+
+- Utwórz wektor prawdziwych parametrów $\beta$, na przykład losując 12 obserwacji z rozkładu $Unif(-3, 3)$
+```{r}
+B <- c(crim=1.52274943515658, zn=-2.79081122064963, indus=0, 
+       nox=1.4332089680247, rm=1.03212527744472, age=0, 
+       dis=2.75923800934106, tax=2.43884606240317, ptratio=0, 
+       black=-0.371096117421985, lstat=1.09251574007794, medv=0)
+# wykorzystuje zmienną prowadzącego
+
+zeroB <- sample(c(T, F), 12, rep=T) #wybieramy ze zwracaniem T lub F
+B[zeroB] <- 0
+names(B) <- names(x_vars)
+head(B)
+Y <- as.matrix(x_vars) %*% B + rnorm(nrow(Boston), 0, 1) 
+Y_train <- Y[train_set]
+Y_test <- Y[-train_set]
+```
+
+### 1. Zwykły model liniowy. 
+Stwórz model liniowy za pomocą ```lm```. Czy model poprawnie wykrył, od których zmiennych zależy ```Y```? Porównaj wartości estymatorów $$β_j$$ z prawdziwymi wartościami $$β_j$$. Zbadaj błąd średniokwadratowy predykcji na zbiorze testowym (pamiętaj, że znasz prawdziwe wartości zmiennej Y na zbiorze testowym). Porównaj go z minimalnym błędem jaki możemy otrzymać, czyli Yi−Xiβ.
+
+```{r}
+lm_model <- lm(Y_train~., X_train) # zwykły model linowy
+summary(lm_model)
+Y_test_hat <- predict(lm_model, X_test)
+train_error <- mean(lm_model$residuals^2)
+test_error <- mean((Y_test - Y_test_hat)^2)
+train_error; test_error;
+```
+
+### 2. Kryterium informacyjne: 
+- [X] Wybierz model za pomocą funkcji stepAIC. 
+- [X] Czy jesteśmy blisko minimalnego błędu? ***Dla zbioru testowego tak, ***
+- [X] Na ile uzyskany model jest poprawny?  Poprawność możemy ocenić na przykład poprzez sprawdzenie, ile spośród wyzerowanych parametrów jest w modelu, a ile niezerowych do niego nie trafiło. *** widzimy, że wiekszość z zerowych trafiła do modelu***
+
+```{r}
+aic_model <- stepAIC(lm_model, trace=F)
+bic_model <- stepAIC(lm_model, k=log(nrow(X_train)), trace=F)
+
+cbind('True'= c(0, B), 'AIC'=aic_model$coefficients, 'LM'=lm_model$coefficients) 
+
+```
+- [X] Czy kryterium informacyjne poprawiło model i predykcję?
+Tak poprawiło, 
+
+
+Błędy predykcji dla kryterium AIC
+```{r}
+aic_train <- mean(aic_model$residuals^{2})
+aic_test <- mean(Y_test - predict(bic_model, X_test))
+aic_train; aic_test
+```
+
+Błędy predykcji dla kryterium BIC
+```{r}
+bic_train <- mean(bic_model$residuals^{2})
+bic_test <- mean((Y_test - predict(bic_model, X_test))^{2})
+bic_train; bic_test;
+```
+- [X] Porównaj kryterium AIC z kryterium BIC. 
+- [X] To ostatnie, zgodnie z teorią, prowadzi do wyboru poprawnego modelu, o ile możemy porównać ze sobą wszystkie potencjalne modele (zamiast wykorzystywać strategię krokową) oraz posiadamy nieskończenie wiele obserwacji.
+
+
+
+
+3. Regresja LASSO. 
+- [X] Dopasuj model LASSO do zbioru treningowego za pomocą funkcji cv.glmnet z biblioteki glmnet. 
+- [X] Funkcja ta sama wybierze pewną liczbę wartości $λ$ do przetestowania, i dla każdej z nich przeprowadzi walidację krzyżową aby ocenić błąd predykcji. 
+- [X] Ponieważ nasze dane są już wystandaryzowane, ustaw w funkcji cv.glmnet atrybut standardize=F; ponadto ustaw thresh=1e-16 aby otrzymać dokładniejszą estymację. 
+- [X] Uwaga: funkcja cv.glmnet i inne funkcje z tego pakietu wymagają na wejściu macierzy, a nie ramki danych - należy wykorzystać funkcję as.matrix().
+
+
+```{r}
+library(glmnet)
+X_train <- as.matrix(X_train)
+X_test <- as.matrix(X_test)
+
+simple.cv <- cv.glmnet(X_train, Y_train, standardize=F, intercept=T, thresh=1e-16)
+plot(simple.cv)
+coef <- coef(simple.cv) 
+coef
+# Porównanie metod:
+cbind('True'= c(0, B), 'LASSO'=coef, 'LM'=lm_model$coefficients) 
+```
+
+```{r}
+final_model <- lm(Y_train ~ crim + zn + nox + age + dis + tax + lstat, data= as.data.frame(X_train))
+final_pred <- predict(final_model, as.data.frame(X_test))
+final_error <- mean((Y_test - final_pred)^2)
+
+```
+
+- [X] Porównaj błąd na zbiorze testowym wybranym na początku tego zadania. 
+- [X] Może być on większy niż w przypadku innych technik, ponieważ metoda LASSO może wprowadzić spore obciążenie do estymowanych parametrów - w następnym zadaniu zobaczymy, jak to poprawić. 
+```{r}
+final_error;test_error
+```
+

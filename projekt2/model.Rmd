@@ -1,0 +1,81 @@
+Zadanie1 
+```{r}
+load('cancer.RData')
+```
+
+```{r}
+head(data.train)
+```
+Zadanie 1  (1 pkt) (Analiza zmiennych objaśniających)
+a) Podsumuj, ile zmiennych jest jakiego typu?
+b) Wybierz 500 kolumn o największej zmienności. Policz korelację dla każdej z par tych
+kolumn.
+
+
+```{r}
+
+
+# calculate variance per column
+variances <- apply(X=data.train, MARGIN=2, FUN=var)
+
+# sort variance, grab index of the first 2
+sorted <- sort(variances, decreasing=TRUE, index.return=TRUE)$ix[1:500]
+
+# use that to subset the original data
+dat.highvariance <- data.train[, sorted]
+dat.highvariance
+```
+
+- [ ] Zilustruj poziom współliniowości między tymi wybranymi kolumnami, rysując
+wykres rozkładu policzonych korelacji (wynikiem tego punktu ma być jeden wykres
+geom_violin()  w ggplot2).
+```{r}
+library(ggplot2)
+  ggplot(data = dat.highvariance, aes (x = variable, y = Y, fill = as.factor(iter))) + geom_violin(position = "dodge")
+```
+
+### Zadanie 2 (2 pkt)
+Poczytaj w podręczniku (Elements of Statistical Learning
+https://web.stanford.edu/~hastie/Papers/ESLII.pdf) na temat modelu elastic net (łącznie z
+Sekcją 18.4). Opisz jak działa ta metoda w oparciu o wprowadzone na wykładzie metody
+regresji grzbietowej i lasso. Podaj jakie ma parametry, które parametry są estymowane, a które
+tuningowe i jaką funkcję ta metoda optymalizuje.
+
+```{r}
+library(glmnet)
+fit.lasso <- glmnet(data.train, data.train, family="gaussian", alpha=1)
+```
+
+```{r}
+# Fit models 
+# (For plots on left):
+fit.lasso <- glmnet(x.train, y.train, family="gaussian", alpha=1)
+fit.ridge <- glmnet(x.train, y.train, family="gaussian", alpha=0)
+fit.elnet <- glmnet(x.train, y.train, family="gaussian", alpha=.5)
+
+
+# 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
+# (For plots on Right)
+for (i in 0:10) {
+    assign(paste("fit", i, sep=""), cv.glmnet(x.train, y.train, type.measure="mse", 
+                                              alpha=i/10,family="gaussian"))
+}
+```
+
+### Zadanie 3
+Opisz swój pomysł na sposób dokonania wyboru modelu (zbioru najlepszych predyktorów) w
+metodach: elastic net oraz random forest. Pomysł może być autorski lub znaleziony w
+podręcznikach lub artykułach naukowych. W tym drugim przypadku podaj źródła.
+
+### Zadanie 4
+Zadanie 4 (2 pkt)
+Zbuduj modele: elastic net (z paczki glmnet) oraz random forest. Zastosuj walidację krzyżową,
+aby
+* dobrać parametry tuningowe,
+* wyestymować błąd testowy dla swoich modeli.
+Zrób podsumowanie tabelaryczne wyników, jakie otrzymywały metody w walidacji krzyżowej.
+Określ, który model wydaje Ci się najlepszy i dlaczego.
+
+### Zadanie 5. (8 pkt) (Przygotowanie predykcji dla danych testowych)
+Naucz wybrany model na całych danych treningowych, dla zbioru cancer.RData. Zastosuj
+nauczony model do danych testowych i przewidź zmienną objaśnianą dla tych danych.

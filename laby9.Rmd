@@ -118,9 +118,42 @@ Przeprowadź regresję liniową zmiennej Today na podstawie zmiennych Lag. Nast�
 library(ISLR)
 data("Smarket")
 head(Smarket)
+attach(Smarket)
 
 m1 <- lm(Today ~ Lag1 + Lag2 + Lag3+ Lag4 + Lag5)
+confint(model)
 
-prawdopodobienstwa <- predict(, type = "response")
+prawdopodobienstwa <- predict(m1, type = "response")
 
 ```
+
+
+```{r}
+library(class)
+
+train <- rbind(iris3[1:25,,1], iris3[1:25,,2], iris3[1:25,,3])
+test <- rbind(iris3[26:50,,1], iris3[26:50,,2], iris3[26:50,,3])
+
+cl <- factor(c(rep("s", 25), rep("c", 25), rep("v", 25)))
+knn(train, test, cl, k = 3, prob=TRUE)
+
+
+
+```
+
+Przypomnienie
+```{r}
+
+x <- c(0.42, 0.03, -0.90, 0.15, -1.25, -0.15, -0.01, 0.73, 0.90, -0.82, -0.69)
+```
+
+```{r}
+distances <- apply(wine[-1], 1, function(y) sqrt(sum(x-y)^2))
+
+k <- 3
+najblizsze_wiersze <- order(distances)[1:k]
+najblizsze_klasy <- wine[najblizsze_wiersze, 1]
+czestosc_klas <- table(najblizsze_klasy)
+
+```
+

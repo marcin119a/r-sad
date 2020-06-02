@@ -1,0 +1,63 @@
+- [X] Zbuduj las losowy przewidujący złośliwość nowotworu na danych biopsy. 
+```{r}
+library(MASS)
+library(randomForest)
+
+data(biopsy)
+biopsy <- na.omit(biopsy)
+biopsy$ID <- NULL  
+
+rf<-randomForest(class~.,data=biopsy, importance = TRUE)
+rf
+```
+-[X] Sprawdź, czy jego dokładność w walidacji krzyżowej przebije 96%, czyli tę którą osiągnęliśmy korzystając z modelu logistycznego.
+```{r}
+# imprementacja k-walidacji krzyżowej, dzielimy na k=20 cześci
+k <- 20
+k_podzial <- cut(1:nrow(biopsy), k, labels = F)
+k_podzial <- sample(k_podzial) 
+error <- replicate(k, 0)
+for(i in 1:k) {
+  train <- which(k_podzial==i)
+  y_acc <- biopsy[-train,'class']
+  
+  rf <- randomForest(class~., data=biopsy, subset=train) #liczbymy na k-tym podziale
+  y_hat <- predict(rf, biopsy[-train,])
+  
+  error[i] <- mean(y_hat!=y_acc) # błąd 
+}
+error
+```
+Estymowany błąd testowy znajdziesz w podstawowych informacjach dotyczących utworzonego modelu, które uzyskasz wpisując jego nazwę w konsolę. 
+```{r}
+varImpPlot(rf)
+```
+Jest on opisany jako ‘OOB estimate of error rate’ - jest to tak zwany błąd out-of-bag, który przybliża błąd walidacji krzyżowej. 
+Przedstaw istotność zmiennych na wykresie, wykorzystując funkcję varImpPlot lub bibliotekę ggplot2. 
+```{r}
+#funkcja licząca błąd
+computeOOBErrEst <- function (model)
+{
+  cm <- model$confusion
+  cm <- cm[, -ncol(cm)]
+  1 - sum(diag(cm)) / sum(cm)
+}
+computeOOBErrEst(rf)
+```
+
+```{r}
+varImpPlot(rf)
+```
+Możesz również przetestować różne liczby zmiennych losowanych przy podziale węzłów modyfikując atrybut mtry. Możesz też zmienić liczbę drzew za pomocą argumentu ntrees. 
+```{r}
+rf1 <- randomForest(class~., data=biopsy, importance=TRUE, mtry=5, ntree=500)
+rf1
+computeOOBErrEst(rf1)
+plot(rf1)
+```
+
+- [X] Może być tu pomocna funkcja plot, która wywołana na utworzonym modelu przedstawi zależność błędu testowego od liczby użytych drzew.
+
+W praktyce bierze się po prostu “dostatecznie dużo” drzew (na przykład 500) i nie przeprowadza dodatkowych analiz dotyczących ich optymalnej liczby, ponieważ ma to bardzo nieznaczny wpływ na błąd. Więcej informacji na ten temat można przeczytać tutaj.
+
+Dla chętnych: Przeprowadź ręcznie walidację krzyżową i porównaj z estymatorem OOB.
