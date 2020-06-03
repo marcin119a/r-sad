@@ -2,9 +2,10 @@ Zadanie1
 ```{r}
 load('cancer.RData')
 ```
-
+  
 ```{r}
-head(data.train)
+
+head(data.test)
 ```
 Zadanie 1  (1 pkt) (Analiza zmiennych objaśniających)
 a) Podsumuj, ile zmiennych jest jakiego typu?
@@ -13,25 +14,34 @@ kolumn.
 
 
 ```{r}
-
-
 # calculate variance per column
 variances <- apply(X=data.train, MARGIN=2, FUN=var)
+which( colnames(data.train) == "Y" )
 
 # sort variance, grab index of the first 2
 sorted <- sort(variances, decreasing=TRUE, index.return=TRUE)$ix[1:500]
 
 # use that to subset the original data
-dat.highvariance <- data.train[, sorted]
-dat.highvariance
+X_train<- data.train[, append(sorted, 17738)]
+
+Y_train <- dat.highvariance$Y
+
+drops <- c("Y")
+data.train[,c("Y")] <- list(NULL)
+head(data.train)
+
 ```
 
+```{r}
+head(dat.highvariance$Y)
+```
+
+
 - [ ] Zilustruj poziom współliniowości między tymi wybranymi kolumnami, rysując
-wykres rozkładu policzonych korelacji (wynikiem tego punktu ma być jeden wykres
-geom_violin()  w ggplot2).
+wykres rozkładu policzonych korelacji (wynikiem tego punktu ma być jeden wykres geom_violin()  w ggplot2).
 ```{r}
 library(ggplot2)
-  ggplot(data = dat.highvariance, aes (x = variable, y = Y, fill = as.factor(iter))) + geom_violin(position = "dodge")
+  ggplot(data = dat.highvariance, aes (x = X, y = Y, fill = as.factor(iter))) + geom_violin(position = "dodge")
 ```
 
 ### Zadanie 2 (2 pkt)
@@ -41,31 +51,45 @@ Sekcją 18.4). Opisz jak działa ta metoda w oparciu o wprowadzone na wykładzie
 regresji grzbietowej i lasso. Podaj jakie ma parametry, które parametry są estymowane, a które
 tuningowe i jaką funkcję ta metoda optymalizuje.
 
+
+
 ```{r}
 library(glmnet)
-fit.lasso <- glmnet(data.train, data.train, family="gaussian", alpha=1)
+fit.lasso <- glmnet(as.matrix(X_train), Y_train, family="gaussian", alpha=1)
+```
+
+```{r}
+plot(fit.lasso)
 ```
 
 ```{r}
 # Fit models 
 # (For plots on left):
-fit.lasso <- glmnet(x.train, y.train, family="gaussian", alpha=1)
-fit.ridge <- glmnet(x.train, y.train, family="gaussian", alpha=0)
-fit.elnet <- glmnet(x.train, y.train, family="gaussian", alpha=.5)
+fit.ridge <- glmnet(as.matrix(X_train), Y_train, family="gaussian", alpha=0)
+fit.elnet <- glmnet(as.matrix(X_train), Y_train, family="gaussian", alpha=.5)
 
 
 # 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
 # (For plots on Right)
 for (i in 0:10) {
-    assign(paste("fit", i, sep=""), cv.glmnet(x.train, y.train, type.measure="mse", 
+    assign(paste("fit", i, sep=""), cv.glmnet(as.matrix(X_train), Y_train, type.measure="mse", 
                                               alpha=i/10,family="gaussian"))
 }
+
+plot(fit.lasso)
+```
+
+```{r}
+
 ```
 
 ### Zadanie 3
 Opisz swój pomysł na sposób dokonania wyboru modelu (zbioru najlepszych predyktorów) w
 metodach: elastic net oraz random forest. Pomysł może być autorski lub znaleziony w
 podręcznikach lub artykułach naukowych. W tym drugim przypadku podaj źródła.
+```{r}
+
+```
 
 ### Zadanie 4
 Zadanie 4 (2 pkt)
@@ -75,6 +99,26 @@ aby
 * wyestymować błąd testowy dla swoich modeli.
 Zrób podsumowanie tabelaryczne wyników, jakie otrzymywały metody w walidacji krzyżowej.
 Określ, który model wydaje Ci się najlepszy i dlaczego.
+```{r}
+library(randomForest)
+
+k <- 20
+k_podzial <- cut(1:nrow(X_train), k, labels = F)
+k_podzial <- sample(k_podzial) 
+error <- replicate(k, 0)
+for(i in 1:k) {
+  train <- which(k_podzial==i)
+  y_acc <- X_train[-train, 'class']
+  
+  rf <- randomForest(x=X_train, y=Y_train, subset=train) #liczbymy na k-tym podziale
+  y_hat <- predict(rf, X_train[-train,])
+  
+  error[i] <-mean((y_hat - y_acc)^2) # błąd 
+}
+```
+```{r}
+
+```
 
 ### Zadanie 5. (8 pkt) (Przygotowanie predykcji dla danych testowych)
 Naucz wybrany model na całych danych treningowych, dla zbioru cancer.RData. Zastosuj
